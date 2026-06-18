@@ -1,9 +1,7 @@
 "use client";
 
 import { Input } from "@/components/ui/input";
-
 import { Menu, Search, ShoppingCart } from "lucide-react";
-
 import {
   Accordion,
   AccordionItem,
@@ -25,6 +23,8 @@ import {
 } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
+import { authClient } from "@/lib/auth-client";
+import { useState, useRef, useEffect } from "react";
 
 interface MenuItem {
   title: string;
@@ -64,22 +64,42 @@ const Navbar = ({
     title: "FoodHub",
   },
   menu = [
-    {
-      title: "Menu",
-      url: "/menu",
-    },
-    {
-      title: "Food",
-      url: "/product",
-    },
+    { title: "Menu", url: "/menu" },
+    { title: "Food", url: "/product" },
   ],
-
   auth = {
     login: { title: "Login", url: "/login" },
     signup: { title: "Sign up", url: "/signup" },
   },
   className,
 }: NavbarProps) => {
+  // session ana
+  const { data: session, isPending } = authClient.useSession();
+  const user = session?.user;
+
+  async function handleLogout() {
+    await authClient.signOut();
+    window.location.href = "/login";
+  }
+
+  // Navbar component-er bhetore, useSession er por:
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Bairer click e dropdown bondho hobe
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(e.target as Node)
+      ) {
+        setDropdownOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   return (
     <section className={cn("py-4", className)}>
       <div className="container mx-auto px-10 md:px-0">
@@ -115,20 +135,65 @@ const Navbar = ({
             {/* Cart */}
             <Button variant="ghost" size="icon" className="relative">
               <ShoppingCart className="h-5 w-5" />
-
               <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs text-white">
                 3
               </span>
             </Button>
 
-            {/* Auth Buttons */}
-            <Button asChild variant="outline" size="sm">
-              <Link href={auth.login.url}>{auth.login.title}</Link>
-            </Button>
+            {/* Auth / User section */}
+            {isPending ? (
+              <div className="h-9 w-40 animate-pulse rounded-md bg-muted" />
+            ) : user ? (
+              <div className="relative" ref={dropdownRef}>
+                <button
+                  onClick={() => setDropdownOpen((prev) => !prev)}
+                  className="flex items-center gap-2 rounded-md px-2 py-1 text-sm font-medium hover:bg-muted"
+                >
+                  {user.image ? (
+                    <img
+                      src={user.image}
+                      alt={user.name}
+                      className="h-8 w-8 rounded-full object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground">
+                      {user.name?.charAt(0)?.toUpperCase() ?? "U"}
+                    </div>
+                  )}
+                  <span>{user.name}</span>
+                </button>
 
-            <Button asChild size="sm">
-              <Link href={auth.signup.url}>{auth.signup.title}</Link>
-            </Button>
+                {dropdownOpen && (
+                  <div className="absolute right-0 z-50 mt-2 w-48 rounded-md border bg-background py-1 shadow-md">
+                    <Link
+                      href="/profile"
+                      className="block px-4 py-2 text-sm hover:bg-muted"
+                      onClick={() => setDropdownOpen(false)}
+                    >
+                      Profile
+                    </Link>
+                    <button
+                      onClick={() => {
+                        setDropdownOpen(false);
+                        handleLogout();
+                      }}
+                      className="block w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-muted"
+                    >
+                      Logout
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <>
+                <Button asChild variant="outline" size="sm">
+                  <Link href={auth.login.url}>{auth.login.title}</Link>
+                </Button>
+                <Button asChild size="sm">
+                  <Link href={auth.signup.url}>{auth.signup.title}</Link>
+                </Button>
+              </>
+            )}
           </div>
         </nav>
 
@@ -161,7 +226,8 @@ const Navbar = ({
                     </Link>
                   </SheetTitle>
                 </SheetHeader>
-                {/* //search bar for mobile */}
+
+                {/* search bar for mobile */}
                 <div className="relative px-2">
                   <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <Input placeholder="Search..." className="pl-9" />
@@ -184,12 +250,43 @@ const Navbar = ({
                   </Accordion>
 
                   <div className="flex flex-col gap-3">
-                    <Button asChild variant="outline">
-                      <Link href={auth.login.url}>{auth.login.title}</Link>
-                    </Button>
-                    <Button asChild>
-                      <Link href={auth.signup.url}>{auth.signup.title}</Link>
-                    </Button>
+                    {isPending ? (
+                      <div className="h-9 w-full animate-pulse rounded-md bg-muted" />
+                    ) : user ? (
+                      <>
+                        <Link
+                          href="/profile"
+                          className="flex items-center gap-2 px-2 text-sm font-medium"
+                        >
+                          {user.image ? (
+                            <img
+                              src={user.image}
+                              alt={user.name}
+                              className="h-8 w-8 rounded-full object-cover"
+                            />
+                          ) : (
+                            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground">
+                              {user.name?.charAt(0)?.toUpperCase() ?? "U"}
+                            </div>
+                          )}
+                          <span>{user.name}</span>
+                        </Link>
+                        <Button variant="outline" onClick={handleLogout}>
+                          Logout
+                        </Button>
+                      </>
+                    ) : (
+                      <>
+                        <Button asChild variant="outline">
+                          <Link href={auth.login.url}>{auth.login.title}</Link>
+                        </Button>
+                        <Button asChild>
+                          <Link href={auth.signup.url}>
+                            {auth.signup.title}
+                          </Link>
+                        </Button>
+                      </>
+                    )}
                   </div>
                 </div>
               </SheetContent>
