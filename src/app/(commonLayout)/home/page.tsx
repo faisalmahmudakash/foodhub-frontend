@@ -1,10 +1,11 @@
-import React from "react";
-import HeroSectionPage from "./heroSection/page";
+import HeroPage from "./heroSection/page";
+import PopularFoodPage from "./popularFood/page";
 
-export default function HomePage() {
+export default async function HomePage() {
   return (
-    <div>
-      <HeroSectionPage />
-    </div>
+    <main>
+      <HeroPage />
+      <PopularFoodPage />
+    </main>
   );
 }

@@ -7,7 +7,11 @@ export const adminRoutes: Route[] = [
     items: [
       {
         title: "Product",
-        url: "/dashboard/product",
+        url: "/admin-dashboard/product",
+      },
+      {
+        title: "Slide",
+        url: "/admin-dashboard/slide",
       },
     ],
   },
