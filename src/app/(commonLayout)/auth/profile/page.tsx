@@ -113,8 +113,40 @@ export default function ProfilePage() {
   }
 
   async function handleDelete() {
-    // TODO: implement delete
-    console.log("Delete clicked");
+    if (!user) return;
+
+    const confirmed = window.confirm(
+      "Are you sure you want to delete your account? This cannot be undone.",
+    );
+    if (!confirmed) return;
+
+    setLoading(true);
+    setError("");
+
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/profile/${user.id}`,
+        {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+        },
+      );
+
+      const data = await res.json().catch(() => null);
+
+      if (!res.ok || !data?.success) {
+        throw new Error(data?.message?.error ?? "Delete failed");
+      }
+
+      //signout after Account delete -> redirect to home
+      await authClient.signOut();
+      window.location.href = "/";
+    } catch (err: any) {
+      setError(err.message ?? "Something went wrong");
+    } finally {
+      setLoading(false);
+    }
   }
 
   if (isPending) {

@@ -60,7 +60,7 @@ export function SignupForm(props: React.ComponentProps<typeof Card>) {
       phone: form.phone,
       defaultAddress: form.defaultAddress,
       image: "https://example.com/image.png",
-      callbackURL: "http://localhost:3000/login",
+      callbackURL: `${process.env.NEXT_PUBLIC_API_URL}/auth/login`,
     });
 
     if (error) {
