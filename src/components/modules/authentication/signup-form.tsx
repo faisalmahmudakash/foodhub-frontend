@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/card";
 import {
   Field,
-  FieldDescription,
+  FieldDescription, 
   FieldGroup,
   FieldLabel,
 } from "@/components/ui/field";
@@ -72,7 +72,7 @@ export function SignupForm(props: React.ComponentProps<typeof Card>) {
     console.log(error, data);
 
     setLoading(false);
-    router.push("/login");
+    router.push("/auth/login");
   };
 
   return (
@@ -167,7 +167,7 @@ export function SignupForm(props: React.ComponentProps<typeof Card>) {
 
               <FieldDescription className="text-center mt-2">
                 Already have an account?{" "}
-                <Link href="/login" className="underline">
+                <Link href="/auth/login" className="underline">
                   Sign in
                 </Link>
               </FieldDescription>

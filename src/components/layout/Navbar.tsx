@@ -68,8 +68,8 @@ const Navbar = ({
     { title: "Food", url: "/product" },
   ],
   auth = {
-    login: { title: "Login", url: "/login" },
-    signup: { title: "Sign up", url: "/signup" },
+    login: { title: "Login", url: "/auth/login" },
+    signup: { title: "Sign up", url: "/auth/signup" },
   },
   className,
 }: NavbarProps) => {
@@ -79,7 +79,7 @@ const Navbar = ({
 
   async function handleLogout() {
     await authClient.signOut();
-    window.location.href = "/login";
+    window.location.href = "/auth/login";
   }
 
   // Navbar component-er bhetore, useSession er por:
@@ -166,7 +166,7 @@ const Navbar = ({
                 {dropdownOpen && (
                   <div className="absolute right-0 z-50 mt-2 w-48 rounded-md border bg-background py-1 shadow-md">
                     <Link
-                      href="/profile"
+                      href="/auth/profile"
                       className="block px-4 py-2 text-sm hover:bg-muted"
                       onClick={() => setDropdownOpen(false)}
                     >
