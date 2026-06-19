@@ -64,6 +64,7 @@ const Navbar = ({
     title: "FoodHub",
   },
   menu = [
+    { title: "Home", url: "/" },
     { title: "Menu", url: "/menu" },
     { title: "Food", url: "/product" },
   ],

@@ -6,7 +6,6 @@ import {
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
-  SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
@@ -24,7 +23,6 @@ import { customerRoutes } from "@/routes/customerRoutes";
 import { providerRoutes } from "@/routes/providerRoutes";
 import { Route } from "@/types";
 
-// ✅ সঠিক
 export function AppSidebar({
   user,
   ...props
@@ -32,15 +30,15 @@ export function AppSidebar({
   let routes: Route[] = [];
 
   switch (user.role) {
-    case "admin":
+    case "ADMIM":
       routes = adminRoutes;
       break;
 
-    case "customer":
+    case "CUSTOMER":
       routes = customerRoutes;
       break;
 
-    case "provider":
+    case "PROVIDER":
       routes = providerRoutes;
       break;
 

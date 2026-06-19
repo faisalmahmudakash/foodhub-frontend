@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/card";
 import {
   Field,
-  FieldDescription, 
+  FieldDescription,
   FieldGroup,
   FieldLabel,
 } from "@/components/ui/field";
@@ -60,7 +60,7 @@ export function SignupForm(props: React.ComponentProps<typeof Card>) {
       phone: form.phone,
       defaultAddress: form.defaultAddress,
       image: "https://example.com/image.png",
-      callbackURL: `${process.env.NEXT_PUBLIC_API_URL}/auth/login`,
+      callbackURL: `${process.env.CALL_BACK_URL}/auth/login`,
     });
 
     if (error) {
