@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Star, ChevronLeft, Clock } from "lucide-react";
 import {
@@ -11,24 +11,9 @@ import {
 } from "@/types/productPrice.type";
 import { loadCart, saveCart } from "@/helpers/cartHelpers";
 import AddonModal from "../../allProduct/addonModal/page";
+import ReviewSection, { ReviewItem } from "./reviewSection/page";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL;
-
-interface ReviewReply {
-  replyId: string;
-  comment: string;
-  createdAt: string;
-  user: { id: string; name: string; role?: string };
-}
-
-interface ReviewItem {
-  reviewId: string;
-  rating: number;
-  comment: string | null;
-  createdAt: string;
-  customer: { id: string; name: string; image?: string | null };
-  reviewReplays: ReviewReply[];
-}
 
 interface ProductPriceDetail {
   priceId: string;
@@ -82,24 +67,25 @@ export default function ProductPreviewPage() {
   const [error, setError] = useState("");
   const [showAddonModal, setShowAddonModal] = useState(false);
 
-  useEffect(() => {
+  const fetchProduct = useCallback(async () => {
     if (!productId) return;
-    const fetchProduct = async () => {
-      try {
-        setLoading(true);
-        const res = await fetch(`${API_BASE}/product/${productId}`);
-        if (!res.ok) throw new Error(`Server error: ${res.status}`);
-        const json = await res.json();
-        if (!json.success) throw new Error(json.message);
-        setProduct(json.data);
-      } catch (err: any) {
-        setError(err.message || "Failed to load product");
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchProduct();
+    try {
+      const res = await fetch(`${API_BASE}/product/${productId}`);
+      if (!res.ok) throw new Error(`Server error: ${res.status}`);
+      const json = await res.json();
+      if (!json.success) throw new Error(json.message);
+      setProduct(json.data);
+    } catch (err: any) {
+      setError(err.message || "Failed to load product");
+    } finally {
+      setLoading(false);
+    }
   }, [productId]);
+
+  useEffect(() => {
+    setLoading(true);
+    fetchProduct();
+  }, [fetchProduct]);
 
   const handleAdd = () => {
     if (!product) return;
@@ -130,9 +116,6 @@ export default function ProductPreviewPage() {
     const unitPrice = base + addonTotal;
     const newItem: CartItem = {
       cartId: `${Date.now()}-${Math.random()}`,
-      // The detail payload is a superset of the shared Product type
-      // (extra fields like provider/reviews) — cast since it satisfies
-      // every field CartItem actually needs.
       product: product as unknown as Product,
       selectedPrice,
       addons,
@@ -158,7 +141,7 @@ export default function ProductPreviewPage() {
       <div className="flex flex-col items-center justify-center gap-3 px-4 py-16 text-center text-[#e85d04]">
         <p>⚠️ {error || "Product not found"}</p>
         <button
-          onClick={() => router.push("/product")}
+          onClick={() => router.push("/menu/allProduct")}
           className="rounded-full bg-[#e85d04] px-5 py-2 text-sm font-bold text-white"
         >
           Back to Menu
@@ -351,79 +334,11 @@ export default function ProductPreviewPage() {
       </button>
 
       {/* ── Reviews ── */}
-      <div className="mt-10">
-        <h2 className="text-lg font-extrabold text-[#1a1208]">
-          Reviews {product.reviews.length > 0 && `(${product.reviews.length})`}
-        </h2>
-
-        {product.reviews.length === 0 ? (
-          <p className="mt-3 text-sm text-[#7a6a55]">
-            No reviews yet for this item.
-          </p>
-        ) : (
-          <div className="mt-4 flex flex-col gap-4">
-            {product.reviews.map((review) => (
-              <div
-                key={review.reviewId}
-                className="rounded-2xl border border-[#ede5d8] bg-[#faf7f3] p-4"
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-2">
-                    {review.customer.image ? (
-                      <img
-                        src={review.customer.image}
-                        alt={review.customer.name}
-                        className="h-8 w-8 rounded-full object-cover"
-                      />
-                    ) : (
-                      <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#fde8d8] text-xs font-bold text-[#e85d04]">
-                        {review.customer.name?.charAt(0)?.toUpperCase() ?? "U"}
-                      </span>
-                    )}
-                    <span className="text-sm font-bold text-[#1a1208]">
-                      {review.customer.name}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-0.5">
-                    {[1, 2, 3, 4, 5].map((i) => (
-                      <Star
-                        key={i}
-                        className={`h-3.5 w-3.5 ${
-                          i <= review.rating
-                            ? "fill-[#e85d04] text-[#e85d04]"
-                            : "fill-[#e0d5c4] text-[#e0d5c4]"
-                        }`}
-                      />
-                    ))}
-                  </div>
-                </div>
-
-                {review.comment && (
-                  <p className="mt-2 text-sm text-[#5a4a35]">
-                    {review.comment}
-                  </p>
-                )}
-
-                {review.reviewReplays.length > 0 && (
-                  <div className="mt-3 flex flex-col gap-2 border-l-2 border-[#ede5d8] pl-3">
-                    {review.reviewReplays.map((reply) => (
-                      <div key={reply.replyId}>
-                        <span className="text-xs font-bold text-[#e85d04]">
-                          {reply.user.name}
-                          {reply.user.role === "PROVIDER" && " (Provider)"}
-                        </span>
-                        <p className="text-sm text-[#5a4a35]">
-                          {reply.comment}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+      <ReviewSection
+        productId={productId as string}
+        reviews={product.reviews}
+        onRefresh={fetchProduct}
+      />
 
       {/* ── Addon modal ── */}
       {showAddonModal && (
