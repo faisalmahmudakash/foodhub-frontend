@@ -229,7 +229,6 @@ function ProductCardPage({
   );
 }
 
-
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function AllProductsPage() {
@@ -325,16 +324,18 @@ export default function AllProductsPage() {
   if (loading) {
     return (
       <div
-        style={{
-          minHeight: "60vh",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: "14px",
-          color: "#7a6a55",
-          fontFamily: "system-ui",
-        }}
+        style={
+          {
+            // minHeight: "60vh",
+            // display: "flex",
+            // flexDirection: "column",
+            // alignItems: "center",
+            // justifyContent: "center",
+            // gap: "14px",
+            // color: "#7a6a55",
+            // fontFamily: "system-ui",
+          }
+        }
       >
         <div
           style={{
@@ -355,14 +356,16 @@ export default function AllProductsPage() {
   if (error) {
     return (
       <div
-        style={{
-          minHeight: "60vh",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          color: "#e85d04",
-          fontFamily: "system-ui",
-        }}
+        style={
+          {
+            // minHeight: "60vh",
+            // display: "flex",
+            // alignItems: "center",
+            // justifyContent: "center",
+            // color: "#e85d04",
+            // fontFamily: "system-ui",
+          }
+        }
       >
         ⚠️ {error}
       </div>
@@ -371,24 +374,20 @@ export default function AllProductsPage() {
 
   return (
     <div
-      style={{
-        minHeight: "100vh",
-        background: "#f5f1eb",
-        fontFamily: "'Inter', system-ui, sans-serif",
-        color: "#1a1208",
-      }}
+      style={
+        {
+          // minHeight: "100vh",
+          // background: "#f5f1eb",
+          // fontFamily: "'Inter', system-ui, sans-serif",
+          // color: "#1a1208",
+        }
+      }
     >
       {/* ── TAG BAR ── */}
       <TagBarPage tags={allTags} active={activeTag} onChange={setActiveTag} />
 
       {/* ── CONTENT ── */}
-      <main
-        // style={{
-        //   maxWidth: "1100px",
-        //   margin: "0 auto",
-        //   padding: "32px 24px 80px",
-        // }}
-      >
+      <main>
         {Object.entries(productsByTag).map(([tag, items], idx) => (
           <section key={tag} style={{ marginTop: idx === 0 ? 0 : "44px" }}>
             {/* Section header */}

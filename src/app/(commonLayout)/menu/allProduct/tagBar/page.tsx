@@ -8,43 +8,22 @@ export default function TagBarPage({
   onChange: (t: string) => void;
 }) {
   return (
-    <div
-      className="max-w-4xl mx-auto"
-      style={{
-        // background: "#fff",
-        // borderBottom: "1px solid #ece5d8",
-        // padding: "0 24px",
-        position: "sticky",
-        top: "60px",
-        zIndex: 10,
-      }}
-    >
-      <div
-        style={{
-          display: "flex",
-          gap: "6px",
-          // overflowX: "auto",
-          padding: "12px 0",
-          scrollbarWidth: "none",
-        }}
-      >
+    <div className="sticky top-0 z-10 rounded-b-2xl border-b border-[#ece5d8] bg-[#f5f1eb] px-3">
+      <div className="flex gap-2 overflow-x-auto py-3 scrollbar-hide">
         {["All", ...tags].map((t) => (
           <button
             key={t}
             onClick={() => onChange(t)}
-            style={{
-              flexShrink: 0,
-              padding: "7px 18px",
-              borderRadius: "50px",
-              border: `1.5px solid ${active === t ? "#e85d04" : "#e0d5c4"}`,
-              background: active === t ? "#e85d04" : "transparent",
-              color: active === t ? "#fff" : "#5a4a35",
-              fontWeight: active === t ? 700 : 500,
-              fontSize: "0.875rem",
-              cursor: "pointer",
-              transition: "all .18s",
-              whiteSpace: "nowrap",
-            }}
+            className={`
+              shrink-0 whitespace-nowrap rounded-full border px-4 py-2
+              text-sm transition-all duration-200
+              sm:px-5
+              ${
+                active === t
+                  ? "border-[#e85d04] bg-[#e85d04] font-bold text-white"
+                  : "border-[#e0d5c4] bg-transparent font-medium text-[#5a4a35] hover:border-[#e85d04] hover:text-[#e85d04]"
+              }
+            `}
           >
             {t}
           </button>

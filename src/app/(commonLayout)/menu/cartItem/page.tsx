@@ -79,7 +79,7 @@ export default function CartItemPage() {
             {/* ── Card Header ── */}
             <div className="px-6 pt-6 pb-4 shrink-0 flex items-center justify-between">
               <h2 className="text-lg font-extrabold text-[#1a1208]">
-                Order Summary
+                Your Cart
               </h2>
               <button
                 onClick={clearCart}
@@ -111,7 +111,7 @@ export default function CartItemPage() {
                         className="w-full h-full object-cover"
                       />
                     ) : (
-                      <div className="w-full min-h-[100px] h-full bg-[#f5ede0] flex items-center justify-center text-3xl">
+                      <div className="w-full min-h-25 h-full bg-[#f5ede0] flex items-center justify-center text-3xl">
                         🍽️
                       </div>
                     )}
@@ -168,7 +168,7 @@ export default function CartItemPage() {
                         >
                           −
                         </button>
-                        <span className="text-sm font-bold min-w-[18px] text-center">
+                        <span className="text-sm font-bold min-w-5 text-center">
                           {item.quantity}
                         </span>
                         <button
