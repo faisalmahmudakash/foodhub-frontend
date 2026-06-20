@@ -383,11 +383,11 @@ export default function AllProductsPage() {
 
       {/* ── CONTENT ── */}
       <main
-        style={{
-          maxWidth: "1100px",
-          margin: "0 auto",
-          padding: "32px 24px 80px",
-        }}
+        // style={{
+        //   maxWidth: "1100px",
+        //   margin: "0 auto",
+        //   padding: "32px 24px 80px",
+        // }}
       >
         {Object.entries(productsByTag).map(([tag, items], idx) => (
           <section key={tag} style={{ marginTop: idx === 0 ? 0 : "44px" }}>
