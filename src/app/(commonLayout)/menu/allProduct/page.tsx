@@ -38,12 +38,27 @@ function ProductCardPage({
   product: Product;
   onAdd: (p: Product) => void;
 }) {
+  const router = useRouter();
   const available = product.availabilityStatus === "AVAILABLE";
   const hasAddons = product.addons?.length > 0;
 
+  // const goToPreview = () => {
+  //   router.push(`/product/${product.productId}`);
+  // };
+
+  const goToPreview = () => {
+    router.push(`/menu/ProductPreview/${product.productId}`); // 👈 updated path
+  };
+
   return (
     <div
-      className={`flex flex-col overflow-hidden rounded-2xl border border-[#ede5d8] bg-white shadow-[0_2px_8px_rgba(0,0,0,0.05)] transition-all duration-200 hover:-translate-y-[3px] hover:shadow-[0_8px_24px_rgba(0,0,0,0.10)] ${
+      onClick={goToPreview}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") goToPreview();
+      }}
+      className={`flex cursor-pointer flex-col overflow-hidden rounded-2xl border border-[#ede5d8] bg-white shadow-[0_2px_8px_rgba(0,0,0,0.05)] transition-all duration-200 hover:-translate-y-[3px] hover:shadow-[0_8px_24px_rgba(0,0,0,0.10)] ${
         available ? "opacity-100" : "opacity-[0.55]"
       }`}
     >
@@ -108,8 +123,11 @@ function ProductCardPage({
           </span>
           <button
             disabled={!available}
-            onClick={() => available && onAdd(product)}
-            className={`rounded-full px-[18px] py-[7px] text-[0.85rem] font-bold text-white transition-colors duration-150 ${
+            onClick={(e) => {
+              e.stopPropagation(); // card-er click navigate korbe na
+              available && onAdd(product);
+            }}
+            className={`rounded-full px-5 py-2 text-[0.85rem] font-bold text-white transition-colors duration-150 ${
               available
                 ? "cursor-pointer bg-[#e85d04]"
                 : "cursor-not-allowed bg-[#ccc]"
