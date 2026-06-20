@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   CartAddon,
@@ -40,186 +40,80 @@ function ProductCardPage({
 }) {
   const available = product.availabilityStatus === "AVAILABLE";
   const hasAddons = product.addons?.length > 0;
-  const [hover, setHover] = useState(false);
 
   return (
     <div
-      onMouseEnter={() => setHover(true)}
-      onMouseLeave={() => setHover(false)}
-      style={{
-        background: "#fff",
-        borderRadius: "16px",
-        overflow: "hidden",
-        border: "1px solid #ede5d8",
-        boxShadow: hover
-          ? "0 8px 24px rgba(0,0,0,.10)"
-          : "0 2px 8px rgba(0,0,0,.05)",
-        transform: hover ? "translateY(-3px)" : "translateY(0)",
-        transition: "all .2s",
-        display: "flex",
-        flexDirection: "column" as const,
-        opacity: available ? 1 : 0.55,
-      }}
+      className={`flex flex-col overflow-hidden rounded-2xl border border-[#ede5d8] bg-white shadow-[0_2px_8px_rgba(0,0,0,0.05)] transition-all duration-200 hover:-translate-y-[3px] hover:shadow-[0_8px_24px_rgba(0,0,0,0.10)] ${
+        available ? "opacity-100" : "opacity-[0.55]"
+      }`}
     >
       {/* Image */}
-      <div
-        style={{ position: "relative", height: "160px", overflow: "hidden" }}
-      >
+      <div className="relative h-40 overflow-hidden sm:h-44">
         {product.images ? (
           <img
             src={product.images}
             alt={product.productName}
-            style={{ width: "100%", height: "100%", objectFit: "cover" }}
+            className="h-full w-full object-cover"
           />
         ) : (
-          <div
-            style={{
-              width: "100%",
-              height: "100%",
-              background: "#f5ede0",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: "2.5rem",
-            }}
-          >
+          <div className="flex h-full w-full items-center justify-center bg-[#f5ede0] text-[2.5rem]">
             🍽️
           </div>
         )}
         {product.featured && (
-          <span
-            style={{
-              position: "absolute",
-              top: "10px",
-              left: "10px",
-              background: "#e85d04",
-              color: "#fff",
-              fontSize: "0.68rem",
-              fontWeight: 700,
-              padding: "3px 9px",
-              borderRadius: "50px",
-              letterSpacing: "0.5px",
-            }}
-          >
+          <span className="absolute left-2.5 top-2.5 rounded-full bg-[#e85d04] px-[9px] py-[3px] text-[0.68rem] font-bold tracking-[0.5px] text-white">
             Featured
           </span>
         )}
         {!available && (
-          <div
-            style={{
-              position: "absolute",
-              inset: 0,
-              background: "rgba(0,0,0,.35)",
-              color: "#fff",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontWeight: 700,
-              fontSize: "0.85rem",
-            }}
-          >
+          <div className="absolute inset-0 flex items-center justify-center bg-black/35 text-[0.85rem] font-bold text-white">
             Not Available
           </div>
         )}
       </div>
 
       {/* Body */}
-      <div
-        style={{
-          padding: "14px 16px 16px",
-          flex: 1,
-          display: "flex",
-          flexDirection: "column" as const,
-          gap: "6px",
-        }}
-      >
+      <div className="flex flex-1 flex-col gap-1.5 px-4 pb-4 pt-3.5">
         <div>
-          <div style={{ fontSize: "1rem", fontWeight: 700, color: "#1a1208" }}>
+          <div className="text-base font-bold text-[#1a1208]">
             {product.productName}
           </div>
           {product.provider?.name && (
-            <div
-              style={{
-                fontSize: "0.75rem",
-                color: "#8a7460",
-                marginTop: "2px",
-              }}
-            >
+            <div className="mt-0.5 text-xs text-[#8a7460]">
               🏪 {product.provider.name}
             </div>
           )}
         </div>
 
         {product.description && (
-          <div
-            style={{
-              fontSize: "0.78rem",
-              color: "#7a6a55",
-              lineHeight: 1.4,
-              display: "-webkit-box",
-              WebkitLineClamp: 2,
-              WebkitBoxOrient: "vertical" as const,
-              overflow: "hidden",
-            }}
-          >
+          <div className="line-clamp-2 text-[0.78rem] leading-[1.4] text-[#7a6a55]">
             {product.description}
           </div>
         )}
 
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-          }}
-        >
-          <span style={{ fontSize: "0.74rem", color: "#a08060" }}>
+        <div className="flex items-center justify-between">
+          <span className="text-[0.74rem] text-[#a08060]">
             {getSizeLabel(product.productPrices)}
           </span>
           {hasAddons && (
-            <span
-              style={{
-                fontSize: "0.7rem",
-                background: "#fde8d8",
-                color: "#e85d04",
-                padding: "2px 8px",
-                borderRadius: "50px",
-                fontWeight: 600,
-              }}
-            >
+            <span className="rounded-full bg-[#fde8d8] px-2 py-0.5 text-[0.7rem] font-semibold text-[#e85d04]">
               +{product.addons.length} add-ons
             </span>
           )}
         </div>
 
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            marginTop: "auto",
-            paddingTop: "6px",
-          }}
-        >
-          <span
-            style={{ fontSize: "1.05rem", fontWeight: 800, color: "#e85d04" }}
-          >
+        <div className="mt-auto flex items-center justify-between pt-1.5">
+          <span className="text-[1.05rem] font-extrabold text-[#e85d04]">
             {getDisplayPrice(product.productPrices)}
           </span>
           <button
             disabled={!available}
             onClick={() => available && onAdd(product)}
-            style={{
-              background: available ? "#e85d04" : "#ccc",
-              color: "#fff",
-              border: "none",
-              borderRadius: "50px",
-              padding: "7px 18px",
-              fontSize: "0.85rem",
-              fontWeight: 700,
-              cursor: available ? "pointer" : "not-allowed",
-              transition: "background .18s",
-            }}
+            className={`rounded-full px-[18px] py-[7px] text-[0.85rem] font-bold text-white transition-colors duration-150 ${
+              available
+                ? "cursor-pointer bg-[#e85d04]"
+                : "cursor-not-allowed bg-[#ccc]"
+            }`}
           >
             {hasAddons ? "Customize" : "Add"}
           </button>
@@ -323,31 +217,8 @@ export default function AllProductsPage() {
 
   if (loading) {
     return (
-      <div
-        style={
-          {
-            // minHeight: "60vh",
-            // display: "flex",
-            // flexDirection: "column",
-            // alignItems: "center",
-            // justifyContent: "center",
-            // gap: "14px",
-            // color: "#7a6a55",
-            // fontFamily: "system-ui",
-          }
-        }
-      >
-        <div
-          style={{
-            width: "40px",
-            height: "40px",
-            border: "3px solid #e0d5c4",
-            borderTopColor: "#e85d04",
-            borderRadius: "50%",
-            animation: "spin 0.8s linear infinite",
-          }}
-        />
-        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      <div className="flex flex-col items-center justify-center gap-3.5 px-4 py-10 text-[#7a6a55]">
+        <div className="h-10 w-10 animate-spin rounded-full border-[3px] border-[#e0d5c4] border-t-[#e85d04]" />
         <p>Loading menu…</p>
       </div>
     );
@@ -355,83 +226,36 @@ export default function AllProductsPage() {
 
   if (error) {
     return (
-      <div
-        style={
-          {
-            // minHeight: "60vh",
-            // display: "flex",
-            // alignItems: "center",
-            // justifyContent: "center",
-            // color: "#e85d04",
-            // fontFamily: "system-ui",
-          }
-        }
-      >
+      <div className="flex items-center justify-center px-4 py-10 text-[#e85d04]">
         ⚠️ {error}
       </div>
     );
   }
 
   return (
-    <div
-      style={
-        {
-          // minHeight: "100vh",
-          // background: "#f5f1eb",
-          // fontFamily: "'Inter', system-ui, sans-serif",
-          // color: "#1a1208",
-        }
-      }
-    >
+    <div className="px-4 sm:px-6 lg:px-8">
       {/* ── TAG BAR ── */}
       <TagBarPage tags={allTags} active={activeTag} onChange={setActiveTag} />
 
       {/* ── CONTENT ── */}
       <main>
         {Object.entries(productsByTag).map(([tag, items], idx) => (
-          <section key={tag} style={{ marginTop: idx === 0 ? 0 : "44px" }}>
+          <section key={tag} className={idx === 0 ? "mt-0" : "mt-11"}>
             {/* Section header */}
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "12px",
-                marginBottom: "20px",
-              }}
-            >
-              <h2
-                style={{
-                  fontSize: "1.3rem",
-                  fontWeight: 800,
-                  color: "#1a1208",
-                  whiteSpace: "nowrap" as const,
-                }}
-              >
+            <div className="mb-5 flex items-center gap-3">
+              <h2 className="whitespace-nowrap text-[1.3rem] font-extrabold text-[#1a1208]">
                 {tag}
               </h2>
-              <span
-                style={{
-                  background: "#fde8d8",
-                  color: "#e85d04",
-                  borderRadius: "50px",
-                  padding: "2px 10px",
-                  fontSize: "0.78rem",
-                  fontWeight: 700,
-                }}
-              >
+
+              <div className="h-px flex-1 bg-[#e8dfd0]" />
+
+              <span className="rounded-full bg-[#fde8d8] px-2.5 py-0.5 text-[0.78rem] font-bold text-[#e85d04]">
                 {items.length}
               </span>
-              <div style={{ flex: 1, height: "1px", background: "#e8dfd0" }} />
             </div>
 
             {/* Grid */}
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))",
-                gap: "18px",
-              }}
-            >
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {items.map((product) => (
                 <ProductCardPage
                   key={product.productId}
@@ -444,15 +268,7 @@ export default function AllProductsPage() {
         ))}
 
         {Object.keys(productsByTag).length === 0 && (
-          <div
-            style={{
-              minHeight: "40vh",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              color: "#7a6a55",
-            }}
-          >
+          <div className="flex min-h-[40vh] items-center justify-center text-[#7a6a55]">
             No products found for "{activeTag}"
           </div>
         )}

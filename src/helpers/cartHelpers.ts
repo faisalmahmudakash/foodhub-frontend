@@ -22,4 +22,4 @@ export const recalc = (item: CartItem): CartItem => {
   return { ...item, subtotal };
 };
 
-export const fmt = (n: number) => `$${n.toFixed(2)}`;
+export const fmt = (n: number) => `৳${n.toFixed(2)}`;

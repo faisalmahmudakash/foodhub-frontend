@@ -1,16 +1,16 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { ChevronDown } from "lucide-react";
 import { CartItem } from "@/types/productPrice.type";
 import { fmt, loadCart, recalc, saveCart } from "@/helpers/cartHelpers";
 
 export default function CartItemPage() {
-  const router = useRouter();
   const [cart, setCart] = useState<CartItem[]>([]);
   const [note, setNote] = useState("");
   const [checkingOut, setCheckingOut] = useState(false);
   const [orderSuccess, setOrderSuccess] = useState(false);
+  const [showItemsMobile, setShowItemsMobile] = useState(false);
 
   useEffect(() => {
     setCart(loadCart());
@@ -56,178 +56,191 @@ export default function CartItemPage() {
 
   // ── Main Render ─────────────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen  font-sans text-[#1a1208]">
-      <main className="max-w-2xl mx-auto px-4 py-8 pb-20">
-        {/* ── Empty State ── */}
-        {cart.length === 0 ? (
-          <div className="min-h-[60vh] flex flex-col items-center justify-center gap-4 text-center">
-            <span className="text-6xl">🛒</span>
-            <h2 className="text-2xl font-extrabold">Your cart is empty</h2>
-            <p className="text-sm text-[#7a6a55]">
-              Looks like you haven&apos;t added anything yet.
-            </p>
+    <div className=" font-sans text-[#1a1208]">
+      <main className="mx-auto md:max-w-2xl md:px-3 py-5 md:pb-10 ">
+        {/* ── Single Order Summary Card ── */}
+        <div className="flex flex-col md:rounded-2xl border border-[#ede5d8] bg-white shadow-md">
+          {/* ── Card Header (sticky) ── */}
+          <div className="sticky top-0 z-10 flex shrink-0 items-center justify-between gap-2 rounded-t-2xl bg-white px-4 pt-4 pb-3 sm:px-6 sm:pt-6 sm:pb-4">
             <button
-              onClick={() => router.push("/")}
-              className="mt-2 bg-[#e85d04] hover:bg-[#c94e03] text-white font-bold px-7 py-3 rounded-full transition-colors"
+              type="button"
+              onClick={() => setShowItemsMobile((prev) => !prev)}
+              className="flex min-w-0 items-center gap-1.5 sm:gap-2 lg:cursor-default"
             >
-              Browse Menu
-            </button>
-          </div>
-        ) : (
-          /* ── Single Order Summary Card ── */
-          <div className="bg-white rounded-2xl border border-[#ede5d8] shadow-md flex flex-col">
-            {/* ── Card Header ── */}
-            <div className="px-6 pt-6 pb-4 shrink-0 flex items-center justify-between">
-              <h2 className="text-lg font-extrabold text-[#1a1208]">
+              <h2 className="text-base font-extrabold text-[#1a1208] sm:text-lg">
                 Your Cart
               </h2>
+              {totalItems > 0 && (
+                <span className="shrink-0 text-xs font-semibold text-[#a08060]">
+                  ({totalItems})
+                </span>
+              )}
+              <ChevronDown
+                className={`h-4 w-4 shrink-0 text-[#a08060] transition-transform lg:hidden ${
+                  showItemsMobile ? "rotate-180" : ""
+                }`}
+              />
+            </button>
+            {cart.length > 0 && (
               <button
                 onClick={clearCart}
-                className="border border-[#e0d5c4] text-[#8a7460] text-xs px-4 py-1.5 rounded-full hover:border-[#e85d04] hover:text-[#e85d04] transition-colors"
+                className="shrink-0 rounded-full border border-[#e0d5c4] px-3 py-1 text-[0.7rem] text-[#8a7460] transition-colors hover:border-[#e85d04] hover:text-[#e85d04] sm:px-4 sm:py-1.5 sm:text-xs"
               >
                 Clear all
               </button>
-            </div>
-
-            <hr className="border-[#ede5d8] mx-6 shrink-0" />
-
-            {/* ── Scrollable Items (4টার বেশি হলে scroll) ── */}
-            <div
-              className="overflow-y-auto px-6 py-4 flex flex-col gap-3"
-              style={{ maxHeight: "calc(4 * 132px + 3 * 12px)" }}
-            >
-              {cart.map((item) => (
-                <div
-                  key={item.cartId}
-                  className="bg-[#faf7f3] rounded-2xl border border-[#ede5d8] flex overflow-hidden shrink-0"
-                >
-                  {/* Image */}
-                  <div className="w-24 shrink-0">
-                    {item.product.images ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={item.product.images}
-                        alt={item.product.productName}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-full min-h-25 h-full bg-[#f5ede0] flex items-center justify-center text-3xl">
-                        🍽️
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Body */}
-                  <div className="flex-1 px-4 py-3 flex flex-col gap-2">
-                    {/* Top row */}
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <h3 className="text-sm font-bold text-[#1a1208]">
-                          {item.product.productName}
-                        </h3>
-                        {item.product.provider && (
-                          <span className="block text-xs text-[#8a7460] mt-0.5">
-                            🏪 {item.product.provider.name}
-                          </span>
-                        )}
-                        {item.selectedPrice?.size && (
-                          <span className="block text-xs text-[#a08060] mt-0.5">
-                            Size: {item.selectedPrice.size}
-                          </span>
-                        )}
-                      </div>
-                      <button
-                        onClick={() => removeItem(item.cartId)}
-                        title="Remove"
-                        className="text-[#ccc] hover:bg-[#fde8d8] hover:text-[#e85d04] text-sm px-1.5 py-0.5 rounded-full transition-all"
-                      >
-                        ✕
-                      </button>
-                    </div>
-
-                    {/* Addons */}
-                    {item.addons.length > 0 && (
-                      <div className="flex flex-wrap gap-1.5">
-                        {item.addons.map((ca) => (
-                          <span
-                            key={ca.addon.addonId}
-                            className="bg-[#fde8d8] text-[#e85d04] text-[0.7rem] font-semibold px-2 py-0.5 rounded-full"
-                          >
-                            {ca.addon.addonName} ×{ca.quantity}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* Footer: qty + price */}
-                    <div className="flex justify-between items-center mt-auto">
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => changeQty(item.cartId, -1)}
-                          className="w-7 h-7 rounded-full border border-[#e0d5c4] flex items-center justify-center text-sm hover:border-[#e85d04] hover:text-[#e85d04] transition-all"
-                        >
-                          −
-                        </button>
-                        <span className="text-sm font-bold min-w-5 text-center">
-                          {item.quantity}
-                        </span>
-                        <button
-                          onClick={() => changeQty(item.cartId, 1)}
-                          className="w-7 h-7 rounded-full border border-[#e0d5c4] flex items-center justify-center text-sm hover:border-[#e85d04] hover:text-[#e85d04] transition-all"
-                        >
-                          +
-                        </button>
-                      </div>
-                      <div className="flex flex-col items-end gap-0.5">
-                        <span className="text-[0.7rem] text-[#a08060]">
-                          {fmt(item.unitPrice)} each
-                        </span>
-                        <span className="text-sm font-extrabold text-[#e85d04]">
-                          {fmt(item.subtotal)}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* ── Fixed Bottom: Totals + Checkout ── */}
-            <div className="px-6 pt-4 pb-6 shrink-0 border-t border-[#ede5d8] bg-white rounded-b-2xl">
-              <div className="flex justify-between text-sm text-[#5a4a35] mb-1.5">
-                <span>Subtotal</span>
-                <span>{fmt(subtotal)}</span>
-              </div>
-              <div className="flex justify-between text-sm text-[#5a4a35] mb-3">
-                <span>Delivery Fee</span>
-                <span>{fmt(deliveryFee)}</span>
-              </div>
-
-              <hr className="border-[#ede5d8] mb-3" />
-
-              <div className="flex justify-between text-base font-extrabold text-[#1a1208] mb-3">
-                <span>Total</span>
-                <span>{fmt(grandTotal)}</span>
-              </div>
-
-              <p className="text-xs text-[#a08060] bg-[#fef4ec] px-3 py-2 rounded-xl leading-relaxed mb-4">
-                Discounts and additional charges will be applied at checkout.
-              </p>
-
-              <button
-                onClick={handleCheckout}
-                disabled={checkingOut}
-                className="w-full py-4 bg-[#e85d04] hover:bg-[#c94e03] disabled:opacity-70 disabled:cursor-not-allowed text-white font-bold text-base rounded-xl flex items-center justify-center transition-colors"
-              >
-                {checkingOut ? (
-                  <span className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-                ) : (
-                  `Checkout — ${fmt(grandTotal)}`
-                )}
-              </button>
-            </div>
+            )}
           </div>
-        )}
+
+          <hr className="mx-4 shrink-0 border-[#ede5d8] sm:mx-6" />
+
+          {cart.length === 0 ? (
+            /* ── Empty State (inside the same card) ── */
+            <div className="flex flex-col items-center justify-center gap-3 px-4 py-10 text-center sm:px-6 sm:py-14">
+              <span className="text-4xl sm:text-5xl">🛒</span>
+              <p className="text-sm text-[#7a6a55]">
+                Looks like you haven&apos;t added anything yet.
+              </p>
+            </div>
+          ) : (
+            <>
+              {/* ── Items — hidden on mobile by default, toggled via header ── */}
+              <div
+                className={`flex-col gap-2 overflow-y-auto px-3 py-3 sm:gap-3 sm:px-6 sm:py-4 lg:flex ${
+                  showItemsMobile ? "flex" : "hidden"
+                }`}
+                style={{ maxHeight: "calc(4 * 132px + 3 * 12px)" }}
+              >
+                {cart.map((item) => (
+                  <div
+                    key={item.cartId}
+                    className="flex shrink-0 items-center overflow-hidden rounded-2xl border border-[#ede5d8] bg-[#faf7f3]"
+                  >
+                    {/* Image */}
+                    <div className="m-2 h-12 w-16 shrink-0 overflow-hidden rounded-xl sm:h-14 sm:w-20">
+                      {item.product.images ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={item.product.images}
+                          alt={item.product.productName}
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center bg-[#f5ede0] text-2xl sm:text-3xl">
+                          🍽️
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Body */}
+                    <div className="flex min-w-0 flex-1 flex-col gap-1.5 px-2 py-2.5 sm:gap-2 sm:px-4 sm:py-3">
+                      {/* Top row */}
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0">
+                          <h3 className="truncate text-sm font-bold text-[#1a1208]">
+                            {item.product.productName}
+                          </h3>
+                          {item.product.provider && (
+                            <span className="mt-0.5 block truncate text-xs text-[#8a7460]">
+                              🏪 {item.product.provider.name}
+                            </span>
+                          )}
+                          {item.selectedPrice?.size && (
+                            <span className="mt-0.5 block truncate text-xs text-[#a08060]">
+                              Size: {item.selectedPrice.size}
+                            </span>
+                          )}
+                        </div>
+                        <button
+                          onClick={() => removeItem(item.cartId)}
+                          title="Remove"
+                          className="shrink-0 rounded-full px-1.5 py-0.5 text-sm text-[#ccc] transition-all hover:bg-[#fde8d8] hover:text-[#e85d04]"
+                        >
+                          ✕
+                        </button>
+                      </div>
+
+                      {/* Addons */}
+                      {item.addons.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5">
+                          {item.addons.map((ca) => (
+                            <span
+                              key={ca.addon.addonId}
+                              className="rounded-full bg-[#fde8d8] px-2 py-0.5 text-[0.7rem] font-semibold text-[#e85d04]"
+                            >
+                              {ca.addon.addonName} ×{ca.quantity}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Footer: qty + price */}
+                      <div className="mt-auto flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-1.5 sm:gap-2">
+                          <button
+                            onClick={() => changeQty(item.cartId, -1)}
+                            className="flex h-5 w-5 items-center justify-center rounded-full border border-[#e0d5c4] text-sm transition-all hover:border-[#e85d04] hover:text-[#e85d04]"
+                          >
+                            -
+                          </button>
+                          <span className="min-w-5 text-center text-sm font-bold">
+                            {item.quantity}
+                          </span>
+                          <button
+                            onClick={() => changeQty(item.cartId, 1)}
+                            className="flex h-5 w-5 items-center justify-center rounded-full border border-[#e0d5c4] text-sm transition-all hover:border-[#e85d04] hover:text-[#e85d04]"
+                          >
+                            +
+                          </button>
+                        </div>
+                        <div className="flex flex-col items-end gap-0.5">
+                          <span className="text-[0.7rem] text-[#a08060]">
+                            {fmt(item.unitPrice)} each
+                          </span>
+                          <span className="text-sm font-extrabold text-[#e85d04]">
+                            {fmt(item.subtotal)}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* ── Fixed Bottom: Totals + Checkout ── */}
+              <div className="shrink-0 rounded-b-2xl border-t border-[#ede5d8] bg-white px-4 pt-3 pb-4 sm:px-6 sm:pt-4 sm:pb-6">
+                <div className="mb-1.5 flex justify-between text-sm text-[#5a4a35]">
+                  <span>Subtotal</span>
+                  <span>{fmt(subtotal)}</span>
+                </div>
+                <div className="mb-3 flex justify-between text-sm text-[#5a4a35]">
+                  <span>Delivery Fee</span>
+                  <span>{fmt(deliveryFee)}</span>
+                </div>
+
+                <hr className="mb-3 border-[#ede5d8]" />
+
+                <div className="mb-3 flex justify-between text-base font-extrabold text-[#1a1208]">
+                  <span>Total</span>
+                  <span>{fmt(grandTotal)}</span>
+                </div>
+
+                <div className="sticky bottom-0 left-0 z-50 bg-white p-3 shadow-lg md:static md:p-0 md:shadow-none">
+                  <button
+                    onClick={handleCheckout}
+                    disabled={checkingOut}
+                    className="flex w-full items-center justify-center rounded-xl bg-[#e85d04] py-3 text-sm font-bold text-white transition-colors hover:bg-[#c94e03] disabled:cursor-not-allowed disabled:opacity-70 sm:py-4 sm:text-base"
+                  >
+                    {checkingOut ? (
+                      <span className="h-5 w-5 animate-spin rounded-full border-2 border-white/40 border-t-white" />
+                    ) : (
+                      `Checkout — ${fmt(grandTotal)}`
+                    )}
+                  </button>
+                </div>
+              </div>
+            </>
+          )}
+        </div>
       </main>
     </div>
   );
