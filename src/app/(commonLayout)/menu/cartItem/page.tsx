@@ -93,7 +93,7 @@ export default function CartItemPage() {
       .map((item) =>
         item.cartId === cartId
           ? recalc({ ...item, quantity: Math.max(1, item.quantity + delta) })
-          : item
+          : item,
       )
       .filter((item) => item.quantity > 0);
     update(next);
@@ -111,9 +111,6 @@ export default function CartItemPage() {
   const grandTotal = subtotal + deliveryFee;
 
   const handleCheckout = async () => {
-    // In a real app, you'd call the order API here:
-    // POST /api/v1/orders  { customerId }
-    // The backend reads from the cart in DB
     setCheckingOut(true);
     await new Promise((r) => setTimeout(r, 1400));
     clearCart();
@@ -121,101 +118,127 @@ export default function CartItemPage() {
     setOrderSuccess(true);
   };
 
+  // ── Success Screen ──────────────────────────────────────────────────────────
   if (orderSuccess) {
     return (
-      <>
-        <style>{baseStyles}</style>
-        <div className="success-wrap">
-          <div className="success-icon">🎉</div>
-          <h2 className="success-title">Order Placed!</h2>
-          <p className="success-sub">
+      <div className="min-h-screen bg-[#f5f1eb] flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4 text-center px-6">
+          <span className="text-6xl">🎉</span>
+          <h2 className="text-2xl font-extrabold text-[#1a1208]">
+            Order Placed!
+          </h2>
+          <p className="text-sm text-[#7a6a55]">
             Your order is being prepared. Sit tight!
           </p>
-          <button className="back-btn" onClick={() => router.push("/")}>
+          <button
+            onClick={() => router.push("/")}
+            className="mt-2 bg-[#e85d04] hover:bg-[#c94e03] text-white font-bold px-7 py-3 rounded-full transition-colors"
+          >
             ← Back to Menu
           </button>
         </div>
-      </>
+      </div>
     );
   }
 
+  // ── Main Render ─────────────────────────────────────────────────────────────
   return (
-    <>
-      <style>{baseStyles}</style>
-
+    <div className="min-h-screen bg-[#f5f1eb] font-sans text-[#1a1208]">
       {/* NAV */}
-      <nav className="top-nav">
-        <button className="back-link" onClick={() => router.back()}>
-          ← Back to Menu
-        </button>
-        <div className="nav-logo">
-          Your <span>Cart</span>
-        </div>
-        <div className="nav-count">
-          {totalItems} item{totalItems !== 1 ? "s" : ""}
+      <nav className="sticky top-0 z-50 bg-white border-b border-[#e8e1d6] shadow-sm">
+        <div className="max-w-6xl mx-auto px-6 py-3.5 flex items-center justify-between">
+          <button
+            onClick={() => router.back()}
+            className="text-[#e85d04] text-sm font-semibold bg-transparent border-none cursor-pointer"
+          >
+            ← Back to Menu
+          </button>
+          <span className="text-xl font-extrabold">
+            Your <span className="text-[#e85d04]">Cart</span>
+          </span>
+          <span className="text-sm text-[#8a7460] font-medium">
+            {totalItems} item{totalItems !== 1 ? "s" : ""}
+          </span>
         </div>
       </nav>
 
-      <main className="cart-page">
+      <main className="max-w-6xl mx-auto px-6 py-8 pb-20">
+        {/* ── Empty State ── */}
         {cart.length === 0 ? (
-          <div className="empty-state">
-            <div className="empty-icon">🛒</div>
-            <h2 className="empty-title">Your cart is empty</h2>
-            <p className="empty-sub">
+          <div className="min-h-[60vh] flex flex-col items-center justify-center gap-4 text-center">
+            <span className="text-6xl">🛒</span>
+            <h2 className="text-2xl font-extrabold">Your cart is empty</h2>
+            <p className="text-sm text-[#7a6a55]">
               Looks like you haven&apos;t added anything yet.
             </p>
-            <button className="back-btn" onClick={() => router.push("/")}>
+            <button
+              onClick={() => router.push("/")}
+              className="mt-2 bg-[#e85d04] hover:bg-[#c94e03] text-white font-bold px-7 py-3 rounded-full transition-colors"
+            >
               Browse Menu
             </button>
           </div>
         ) : (
-          <div className="cart-layout">
-            {/* LEFT: Items */}
-            <div className="cart-items-col">
-              <div className="col-header">
-                <h2 className="col-title">Order Items</h2>
-                <button className="clear-btn" onClick={clearCart}>
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-7 items-start">
+            {/* ── LEFT: Items ── */}
+            <div>
+              {/* Column header */}
+              <div className="flex items-center justify-between mb-5">
+                <h2 className="text-xl font-extrabold">Order Items</h2>
+                <button
+                  onClick={clearCart}
+                  className="border border-[#e0d5c4] text-[#8a7460] text-xs px-4 py-1.5 rounded-full hover:border-[#e85d04] hover:text-[#e85d04] transition-colors"
+                >
                   Clear all
                 </button>
               </div>
 
-              <div className="items-list">
+              {/* Items list */}
+              <div className="flex flex-col gap-3.5">
                 {cart.map((item) => (
-                  <div key={item.cartId} className="cart-card">
-                    <div className="cart-card-image-wrap">
+                  <div
+                    key={item.cartId}
+                    className="bg-white rounded-2xl border border-[#ede5d8] flex overflow-hidden shadow-sm"
+                  >
+                    {/* Image */}
+                    <div className="w-28 shrink-0">
                       {item.product.images ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img
                           src={item.product.images}
                           alt={item.product.productName}
-                          className="cart-card-image"
+                          className="w-full h-full object-cover"
                         />
                       ) : (
-                        <div className="cart-card-placeholder">🍽️</div>
+                        <div className="w-full min-h-[110px] h-full bg-[#f5ede0] flex items-center justify-center text-3xl">
+                          🍽️
+                        </div>
                       )}
                     </div>
 
-                    <div className="cart-card-body">
-                      <div className="cart-card-top">
+                    {/* Body */}
+                    <div className="flex-1 px-4 py-3.5 flex flex-col gap-2">
+                      {/* Top row */}
+                      <div className="flex justify-between items-start">
                         <div>
-                          <h3 className="cart-item-name">
+                          <h3 className="text-base font-bold text-[#1a1208]">
                             {item.product.productName}
                           </h3>
                           {item.product.provider && (
-                            <span className="cart-item-provider">
+                            <span className="block text-xs text-[#8a7460] mt-0.5">
                               🏪 {item.product.provider.name}
                             </span>
                           )}
                           {item.selectedPrice?.size && (
-                            <span className="cart-item-size">
+                            <span className="block text-xs text-[#a08060] mt-0.5">
                               Size: {item.selectedPrice.size}
                             </span>
                           )}
                         </div>
                         <button
-                          className="remove-btn"
                           onClick={() => removeItem(item.cartId)}
                           title="Remove"
+                          className="text-[#ccc] hover:bg-[#fde8d8] hover:text-[#e85d04] text-sm px-1.5 py-0.5 rounded-full transition-all"
                         >
                           ✕
                         </button>
@@ -223,36 +246,45 @@ export default function CartItemPage() {
 
                       {/* Addons */}
                       {item.addons.length > 0 && (
-                        <div className="cart-addons">
+                        <div className="flex flex-wrap gap-1.5">
                           {item.addons.map((ca) => (
-                            <span key={ca.addon.addonId} className="cart-addon-chip">
+                            <span
+                              key={ca.addon.addonId}
+                              className="bg-[#fde8d8] text-[#e85d04] text-[0.7rem] font-semibold px-2 py-0.5 rounded-full"
+                            >
                               {ca.addon.addonName} ×{ca.quantity}
                             </span>
                           ))}
                         </div>
                       )}
 
-                      <div className="cart-card-footer">
-                        <div className="qty-ctrl">
+                      {/* Footer */}
+                      <div className="flex justify-between items-center mt-auto">
+                        {/* Qty controls */}
+                        <div className="flex items-center gap-2.5">
                           <button
-                            className="qty-btn"
                             onClick={() => changeQty(item.cartId, -1)}
+                            className="w-8 h-8 rounded-full border border-[#e0d5c4] flex items-center justify-center text-base hover:border-[#e85d04] hover:text-[#e85d04] transition-all"
                           >
                             −
                           </button>
-                          <span className="qty-num">{item.quantity}</span>
+                          <span className="text-sm font-bold min-w-[20px] text-center">
+                            {item.quantity}
+                          </span>
                           <button
-                            className="qty-btn"
                             onClick={() => changeQty(item.cartId, 1)}
+                            className="w-8 h-8 rounded-full border border-[#e0d5c4] flex items-center justify-center text-base hover:border-[#e85d04] hover:text-[#e85d04] transition-all"
                           >
                             +
                           </button>
                         </div>
-                        <div className="cart-price-stack">
-                          <span className="cart-unit-price">
+
+                        {/* Price */}
+                        <div className="flex flex-col items-end gap-0.5">
+                          <span className="text-xs text-[#a08060]">
                             {fmt(item.unitPrice)} each
                           </span>
-                          <span className="cart-subtotal">
+                          <span className="text-base font-extrabold text-[#e85d04]">
                             {fmt(item.subtotal)}
                           </span>
                         </div>
@@ -263,72 +295,80 @@ export default function CartItemPage() {
               </div>
 
               {/* Note */}
-              <div className="note-section">
-                <label className="note-label">Additional Instructions</label>
+              <div className="mt-6 bg-white rounded-2xl border border-[#ede5d8] p-4">
+                <label className="block text-xs font-bold text-[#a08060] uppercase tracking-wide mb-2">
+                  Additional Instructions
+                </label>
                 <textarea
-                  className="note-input"
+                  className="w-full border border-[#e0d5c4] focus:border-[#e85d04] rounded-xl px-3 py-2.5 text-sm font-[inherit] resize-none outline-none text-[#1a1208] transition-colors"
                   placeholder="Any special requests or dietary notes…"
                   rows={3}
                   value={note}
                   onChange={(e) => setNote(e.target.value)}
                   maxLength={300}
                 />
-                <div className="note-count">{note.length}/300</div>
+                <div className="text-xs text-[#a08060] text-right mt-1">
+                  {note.length}/300
+                </div>
               </div>
             </div>
 
-            {/* RIGHT: Summary */}
-            <div className="summary-col">
-              <div className="summary-card">
-                <h3 className="summary-title">Order Summary</h3>
+            {/* ── RIGHT: Summary ── */}
+            <div className="lg:sticky lg:top-20">
+              <div className="bg-white rounded-2xl border border-[#ede5d8] p-6 shadow-md">
+                <h3 className="text-lg font-extrabold mb-5">Order Summary</h3>
 
-                <div className="summary-rows">
+                {/* Per-item rows */}
+                <div className="flex flex-col gap-2 mb-4">
                   {cart.map((item) => (
-                    <div key={item.cartId} className="summary-row">
-                      <span className="summary-row-name">
+                    <div
+                      key={item.cartId}
+                      className="flex justify-between gap-2"
+                    >
+                      <span className="text-[0.82rem] text-[#5a4a35] flex-1">
                         {item.product.productName}
                         {item.selectedPrice?.size
                           ? ` (${item.selectedPrice.size})`
-                          : ""}
-                        {" "}×{item.quantity}
+                          : ""}{" "}
+                        ×{item.quantity}
                       </span>
-                      <span className="summary-row-price">
+                      <span className="text-[0.82rem] font-semibold text-[#1a1208] shrink-0">
                         {fmt(item.subtotal)}
                       </span>
                     </div>
                   ))}
                 </div>
 
-                <div className="summary-divider" />
+                <hr className="border-[#ede5d8] my-3" />
 
-                <div className="summary-line">
+                <div className="flex justify-between text-sm text-[#5a4a35] mb-2">
                   <span>Subtotal</span>
                   <span>{fmt(subtotal)}</span>
                 </div>
-                <div className="summary-line">
+                <div className="flex justify-between text-sm text-[#5a4a35] mb-2">
                   <span>Delivery Fee</span>
                   <span>{fmt(deliveryFee)}</span>
                 </div>
 
-                <div className="summary-divider" />
+                <hr className="border-[#ede5d8] my-3" />
 
-                <div className="summary-total">
+                <div className="flex justify-between text-base font-extrabold text-[#1a1208]">
                   <span>Total</span>
                   <span>{fmt(grandTotal)}</span>
                 </div>
 
-                <p className="summary-note">
+                <p className="text-xs text-[#a08060] mt-3 bg-[#fef4ec] px-3 py-2 rounded-xl leading-relaxed">
                   Discounts and any additional charges will be applied at
                   checkout.
                 </p>
 
                 <button
-                  className="checkout-btn"
                   onClick={handleCheckout}
                   disabled={checkingOut}
+                  className="w-full mt-5 py-4 bg-[#e85d04] hover:bg-[#c94e03] disabled:opacity-70 disabled:cursor-not-allowed text-white font-bold text-base rounded-xl flex items-center justify-center transition-colors"
                 >
                   {checkingOut ? (
-                    <span className="btn-spinner" />
+                    <span className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
                   ) : (
                     `Checkout — ${fmt(grandTotal)}`
                   )}
@@ -338,142 +378,6 @@ export default function CartItemPage() {
           </div>
         )}
       </main>
-    </>
+    </div>
   );
 }
-
-// ─── Styles ───────────────────────────────────────────────────────────────────
-
-const baseStyles = `
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  body { background: #f5f1eb; font-family: 'Inter', system-ui, sans-serif; color: #1a1208; }
-
-  /* NAV */
-  .top-nav {
-    position: sticky; top: 0; z-index: 100;
-    background: #fff; border-bottom: 1px solid #e8e1d6;
-    padding: 14px 24px; display: flex; justify-content: space-between; align-items: center;
-    box-shadow: 0 1px 8px rgba(0,0,0,.06);
-  }
-  .back-link {
-    background: none; border: none; color: #e85d04; cursor: pointer;
-    font-size: 0.9rem; font-weight: 600;
-  }
-  .nav-logo { font-size: 1.25rem; font-weight: 800; color: #1a1208; }
-  .nav-logo span { color: #e85d04; }
-  .nav-count { font-size: 0.85rem; color: #8a7460; font-weight: 500; }
-
-  /* PAGE */
-  .cart-page { max-width: 1100px; margin: 0 auto; padding: 32px 24px 80px; }
-
-  /* LAYOUT */
-  .cart-layout { display: grid; grid-template-columns: 1fr 340px; gap: 28px; align-items: start; }
-  @media (max-width: 800px) { .cart-layout { grid-template-columns: 1fr; } }
-
-  /* LEFT COL */
-  .col-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
-  .col-title { font-size: 1.3rem; font-weight: 800; }
-  .clear-btn { background: none; border: 1.5px solid #e0d5c4; color: #8a7460; padding: 5px 14px; border-radius: 50px; font-size: 0.8rem; cursor: pointer; }
-  .clear-btn:hover { border-color: #e85d04; color: #e85d04; }
-
-  .items-list { display: flex; flex-direction: column; gap: 14px; }
-
-  /* CART CARD */
-  .cart-card {
-    background: #fff; border-radius: 16px; border: 1px solid #ede5d8;
-    overflow: hidden; display: flex; box-shadow: 0 2px 8px rgba(0,0,0,.05);
-  }
-  .cart-card-image-wrap { width: 110px; flex-shrink: 0; }
-  .cart-card-image { width: 100%; height: 100%; object-fit: cover; }
-  .cart-card-placeholder {
-    width: 100%; height: 100%; min-height: 110px; background: #f5ede0;
-    display: flex; align-items: center; justify-content: center; font-size: 2rem;
-  }
-
-  .cart-card-body { flex: 1; padding: 14px 16px; display: flex; flex-direction: column; gap: 8px; }
-  .cart-card-top { display: flex; justify-content: space-between; align-items: flex-start; }
-  .cart-item-name { font-size: 1rem; font-weight: 700; color: #1a1208; }
-  .cart-item-provider { display: block; font-size: 0.75rem; color: #8a7460; margin-top: 2px; }
-  .cart-item-size { display: block; font-size: 0.75rem; color: #a08060; margin-top: 2px; }
-  .remove-btn {
-    background: none; border: none; color: #ccc; cursor: pointer; font-size: 0.85rem;
-    padding: 2px 6px; border-radius: 50%; transition: all .15s;
-  }
-  .remove-btn:hover { background: #fde8d8; color: #e85d04; }
-
-  .cart-addons { display: flex; flex-wrap: wrap; gap: 6px; }
-  .cart-addon-chip { background: #fde8d8; color: #e85d04; font-size: 0.72rem; font-weight: 600; padding: 2px 8px; border-radius: 50px; }
-
-  .cart-card-footer { display: flex; justify-content: space-between; align-items: center; margin-top: auto; }
-
-  .qty-ctrl { display: flex; align-items: center; gap: 10px; }
-  .qty-btn {
-    width: 30px; height: 30px; border-radius: 50%; border: 1.5px solid #e0d5c4;
-    background: transparent; font-size: 1rem; cursor: pointer;
-    display: flex; align-items: center; justify-content: center; transition: all .15s; color: #1a1208;
-  }
-  .qty-btn:hover { border-color: #e85d04; color: #e85d04; }
-  .qty-num { font-size: 0.95rem; font-weight: 700; min-width: 20px; text-align: center; }
-
-  .cart-price-stack { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
-  .cart-unit-price { font-size: 0.75rem; color: #a08060; }
-  .cart-subtotal { font-size: 1rem; font-weight: 800; color: #e85d04; }
-
-  /* NOTE */
-  .note-section { margin-top: 22px; background: #fff; border-radius: 14px; padding: 16px; border: 1px solid #ede5d8; }
-  .note-label { display: block; font-size: 0.8rem; font-weight: 700; color: #a08060; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
-  .note-input {
-    width: 100%; border: 1.5px solid #e0d5c4; border-radius: 10px;
-    padding: 10px 12px; font-size: 0.875rem; font-family: inherit;
-    resize: none; outline: none; color: #1a1208;
-  }
-  .note-input:focus { border-color: #e85d04; }
-  .note-count { font-size: 0.75rem; color: #a08060; text-align: right; margin-top: 4px; }
-
-  /* SUMMARY */
-  .summary-col { position: sticky; top: 80px; }
-  .summary-card { background: #fff; border-radius: 18px; padding: 24px; border: 1px solid #ede5d8; box-shadow: 0 4px 16px rgba(0,0,0,.07); }
-  .summary-title { font-size: 1.1rem; font-weight: 800; margin-bottom: 18px; }
-
-  .summary-rows { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
-  .summary-row { display: flex; justify-content: space-between; gap: 10px; }
-  .summary-row-name { font-size: 0.82rem; color: #5a4a35; flex: 1; }
-  .summary-row-price { font-size: 0.82rem; font-weight: 600; color: #1a1208; flex-shrink: 0; }
-
-  .summary-divider { height: 1px; background: #ede5d8; margin: 12px 0; }
-
-  .summary-line { display: flex; justify-content: space-between; font-size: 0.875rem; color: #5a4a35; margin-bottom: 8px; }
-  .summary-total { display: flex; justify-content: space-between; font-size: 1.05rem; font-weight: 800; color: #1a1208; }
-
-  .summary-note { font-size: 0.75rem; color: #a08060; margin-top: 10px; line-height: 1.5; background: #fef4ec; padding: 8px 10px; border-radius: 8px; }
-
-  .checkout-btn {
-    width: 100%; margin-top: 18px; padding: 15px;
-    background: #e85d04; color: #fff; border: none; border-radius: 12px;
-    font-size: 1rem; font-weight: 700; cursor: pointer; transition: background .2s;
-    display: flex; align-items: center; justify-content: center;
-  }
-  .checkout-btn:hover:not(:disabled) { background: #c94e03; }
-  .checkout-btn:disabled { opacity: 0.7; cursor: not-allowed; }
-  .btn-spinner {
-    width: 20px; height: 20px; border: 2px solid rgba(255,255,255,.4);
-    border-top-color: #fff; border-radius: 50%;
-    animation: spin 0.7s linear infinite;
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
-
-  /* EMPTY / SUCCESS */
-  .empty-state, .success-wrap {
-    min-height: 60vh; display: flex; flex-direction: column;
-    align-items: center; justify-content: center; gap: 14px; text-align: center;
-  }
-  .empty-icon, .success-icon { font-size: 3.5rem; }
-  .empty-title, .success-title { font-size: 1.5rem; font-weight: 800; }
-  .empty-sub, .success-sub { font-size: 0.9rem; color: #7a6a55; }
-  .back-btn {
-    margin-top: 6px; background: #e85d04; color: #fff; border: none;
-    padding: 12px 28px; border-radius: 50px; font-size: 0.95rem;
-    font-weight: 700; cursor: pointer;
-  }
-  .back-btn:hover { background: #c94e03; }
-`;

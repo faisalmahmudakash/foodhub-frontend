@@ -5,10 +5,10 @@ import CartItemPage from "./cartItem/page";
 export default function MenuPage() {
   return (
     <div>
-      <div className="">
+      {/* <div className=""> */}
         <AllProductsPage />
         <CartItemPage />
-      </div>
+      {/* </div> */}
     </div>
   );
 }

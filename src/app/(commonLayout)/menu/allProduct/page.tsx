@@ -14,10 +14,6 @@ import AddonModal from "./addonModal/page";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL;
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-// ─── LOCAL STORAGE CART ───────────────────────────────────────────────────────
-
 const CART_KEY = "food_cart_items";
 
 const loadCart = (): CartItem[] => {
@@ -34,8 +30,6 @@ const saveCart = (items: CartItem[]) => {
   localStorage.setItem(CART_KEY, JSON.stringify(items));
   window.dispatchEvent(new Event("cartUpdated"));
 };
-
-// ─── Product Card ─────────────────────────────────────────────────────────────
 
 function ProductCardPage({
   product,
@@ -235,7 +229,6 @@ function ProductCardPage({
   );
 }
 
-// ─── Addon Modal ──────────────────────────────────────────────────────────────
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
@@ -385,77 +378,6 @@ export default function AllProductsPage() {
         color: "#1a1208",
       }}
     >
-      {/* ── NAV ── */}
-      <nav
-        style={{
-          position: "sticky",
-          top: 0,
-          zIndex: 100,
-          background: "#fff",
-          borderBottom: "1px solid #e8e1d6",
-          boxShadow: "0 1px 8px rgba(0,0,0,.06)",
-        }}
-      >
-        <div
-          style={{
-            maxWidth: "1100px",
-            margin: "0 auto",
-            padding: "0 24px",
-            height: "60px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-          }}
-        >
-          <div
-            style={{
-              fontSize: "1.25rem",
-              fontWeight: 800,
-              color: "#e85d04",
-              letterSpacing: "-0.5px",
-            }}
-          >
-            Food<span style={{ color: "#1a1208" }}>Hub</span>
-          </div>
-          <button
-            onClick={() => router.push("/cartItem")}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "8px",
-              background: "#e85d04",
-              color: "#fff",
-              border: "none",
-              borderRadius: "50px",
-              padding: "9px 20px",
-              fontSize: "0.875rem",
-              fontWeight: 600,
-              cursor: "pointer",
-            }}
-          >
-            🛒 Cart
-            {cartCount > 0 && (
-              <span
-                style={{
-                  background: "#fff",
-                  color: "#e85d04",
-                  borderRadius: "50%",
-                  width: "20px",
-                  height: "20px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: "0.72rem",
-                  fontWeight: 800,
-                }}
-              >
-                {cartCount}
-              </span>
-            )}
-          </button>
-        </div>
-      </nav>
-
       {/* ── TAG BAR ── */}
       <TagBarPage tags={allTags} active={activeTag} onChange={setActiveTag} />
 

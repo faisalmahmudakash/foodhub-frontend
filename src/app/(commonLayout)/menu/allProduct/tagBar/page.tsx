@@ -9,20 +9,21 @@ export default function TagBarPage({
 }) {
   return (
     <div
+      className="max-w-4xl mx-auto"
       style={{
-        background: "#fff",
-        borderBottom: "1px solid #ece5d8",
-        padding: "0 24px",
+        // background: "#fff",
+        // borderBottom: "1px solid #ece5d8",
+        // padding: "0 24px",
         position: "sticky",
         top: "60px",
-        zIndex: 90,
+        zIndex: 10,
       }}
     >
       <div
         style={{
           display: "flex",
           gap: "6px",
-          overflowX: "auto",
+          // overflowX: "auto",
           padding: "12px 0",
           scrollbarWidth: "none",
         }}
