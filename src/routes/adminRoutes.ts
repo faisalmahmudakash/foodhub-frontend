@@ -10,8 +10,8 @@ export const adminRoutes: Route[] = [
         url: "/admin-dashboard/product",
       },
       {
-        title: "Slide",
-        url: "/admin-dashboard/slide",
+        title: "Orders",
+        url: "/admin-dashboard/order",
       },
     ],
   },
