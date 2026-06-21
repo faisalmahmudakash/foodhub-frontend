@@ -21,6 +21,7 @@ export interface Provider {
 }
 
 export interface Product {
+  mileTimeId: string;
   productId: string;
   productName: string;
   description?: string;
@@ -49,3 +50,6 @@ export interface CartItem {
   unitPrice: number;
   subtotal: number;
 }
+
+
+

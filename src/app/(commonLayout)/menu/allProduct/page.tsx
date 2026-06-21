@@ -11,6 +11,8 @@ import {
 import TagBarPage from "./tagBar/page";
 import { getDisplayPrice, getSizeLabel } from "@/helpers/productPriceHelper";
 import AddonModal from "./addonModal/page";
+import { authClient } from "@/lib/auth-client"; // adjust if your auth client lives elsewhere
+import { createCartItemOnServer } from "@/helpers/cartApi";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL;
 
@@ -42,12 +44,8 @@ function ProductCardPage({
   const available = product.availabilityStatus === "AVAILABLE";
   const hasAddons = product.addons?.length > 0;
 
-  // const goToPreview = () => {
-  //   router.push(`/product/${product.productId}`);
-  // };
-
   const goToPreview = () => {
-    router.push(`/menu/ProductPreview/${product.productId}`); // 👈 updated path
+    router.push(`/menu/ProductPreview/${product.productId}`);
   };
 
   return (
@@ -124,7 +122,7 @@ function ProductCardPage({
           <button
             disabled={!available}
             onClick={(e) => {
-              e.stopPropagation(); // card-er click navigate korbe na
+              e.stopPropagation();
               available && onAdd(product);
             }}
             className={`rounded-full px-5 py-2 text-[0.85rem] font-bold text-white transition-colors duration-150 ${
@@ -151,11 +149,14 @@ export default function AllProductsPage() {
   const [activeTag, setActiveTag] = useState("All");
   const [modalProduct, setModalProduct] = useState<Product | null>(null);
   const [cartCount, setCartCount] = useState(0);
+  const [cartError, setCartError] = useState("");
+
+  const { data: session } = authClient.useSession();
+  const customerId = session?.user?.id;
 
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        // ✅ FIX: use full URL to Express backend, not Next.js relative path
         const res = await fetch(`${API_BASE}/product`);
         if (!res.ok) throw new Error(`Server error: ${res.status}`);
         const json = await res.json();
@@ -206,7 +207,7 @@ export default function AllProductsPage() {
     }
   };
 
-  const commitToCart = (
+  const commitToCart = async (
     product: Product,
     selectedPrice: ProductPrice | null,
     addons: CartAddon[],
@@ -229,8 +230,27 @@ export default function AllProductsPage() {
       unitPrice,
       subtotal: unitPrice * qty,
     };
+
+    // Optimistic local update so the cart UI reacts instantly
     saveCart([...loadCart(), newItem]);
     setModalProduct(null);
+
+    if (!customerId) {
+      setCartError("Please log in to save your cart.");
+      return;
+    }
+
+    try {
+      await createCartItemOnServer({
+        customerId,
+        productId: product.productId,
+        priceId: selectedPrice?.priceId,
+        addonIds: addons.map((ca) => ca.addon.addonId),
+        quantity: qty,
+      });
+    } catch (err: any) {
+      setCartError(err.message || "Failed to sync item to your cart.");
+    }
   };
 
   if (loading) {
@@ -252,27 +272,21 @@ export default function AllProductsPage() {
 
   return (
     <div className="px-4 sm:px-6 lg:px-8">
-      {/* ── TAG BAR ── */}
       <TagBarPage tags={allTags} active={activeTag} onChange={setActiveTag} />
 
-      {/* ── CONTENT ── */}
       <main>
         {Object.entries(productsByTag).map(([tag, items], idx) => (
           <section key={tag} className={idx === 0 ? "mt-0" : "mt-11"}>
-            {/* Section header */}
             <div className="mb-5 flex items-center gap-3">
               <h2 className="whitespace-nowrap text-[1.3rem] font-extrabold text-[#1a1208]">
                 {tag}
               </h2>
-
               <div className="h-px flex-1 bg-[#e8dfd0]" />
-
               <span className="rounded-full bg-[#fde8d8] px-2.5 py-0.5 text-[0.78rem] font-bold text-[#e85d04]">
                 {items.length}
               </span>
             </div>
 
-            {/* Grid */}
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {items.map((product) => (
                 <ProductCardPage
@@ -292,7 +306,6 @@ export default function AllProductsPage() {
         )}
       </main>
 
-      {/* ── ADDON MODAL ── */}
       {modalProduct && (
         <AddonModal
           product={modalProduct}
@@ -301,6 +314,18 @@ export default function AllProductsPage() {
             commitToCart(modalProduct, price, addons, qty)
           }
         />
+      )}
+
+      {cartError && (
+        <div className="fixed bottom-4 left-1/2 z-50 flex -translate-x-1/2 items-center gap-3 rounded-full bg-[#1a1208] px-4 py-2 text-sm text-white shadow-lg">
+          <span>{cartError}</span>
+          <button
+            onClick={() => setCartError("")}
+            className="font-bold text-[#e85d04]"
+          >
+            ✕
+          </button>
+        </div>
       )}
     </div>
   );
