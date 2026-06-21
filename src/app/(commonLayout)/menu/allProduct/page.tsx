@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import React, { Suspense, useEffect, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   CartAddon,
   CartItem,
@@ -36,9 +36,11 @@ const saveCart = (items: CartItem[]) => {
 function ProductCardPage({
   product,
   onAdd,
+  isHighlighted,
 }: {
   product: Product;
   onAdd: (p: Product) => void;
+  isHighlighted?: boolean;
 }) {
   const router = useRouter();
   const available = product.availabilityStatus === "AVAILABLE";
@@ -50,14 +52,19 @@ function ProductCardPage({
 
   return (
     <div
+      id={`product-${product.productId}`}
       onClick={goToPreview}
       role="button"
       tabIndex={0}
       onKeyDown={(e) => {
         if (e.key === "Enter" || e.key === " ") goToPreview();
       }}
-      className={`flex cursor-pointer flex-col overflow-hidden rounded-2xl border border-[#ede5d8] bg-white shadow-[0_2px_8px_rgba(0,0,0,0.05)] transition-all duration-200 hover:-translate-y-[3px] hover:shadow-[0_8px_24px_rgba(0,0,0,0.10)] ${
+      className={`flex cursor-pointer flex-col overflow-hidden rounded-2xl border bg-white shadow-[0_2px_8px_rgba(0,0,0,0.05)] transition-all duration-200 hover:-translate-y-[3px] hover:shadow-[0_8px_24px_rgba(0,0,0,0.10)] ${
         available ? "opacity-100" : "opacity-[0.55]"
+      } ${
+        isHighlighted
+          ? "border-[#e85d04] ring-4 ring-[#e85d04]/30"
+          : "border-[#ede5d8]"
       }`}
     >
       {/* Image */}
@@ -139,10 +146,16 @@ function ProductCardPage({
   );
 }
 
-// ─── Main Page ────────────────────────────────────────────────────────────────
+// ─── Main Page (inner, uses useSearchParams) ──────────────────────────────────
 
-export default function AllProductsPage() {
+function AllProductsPageInner() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const highlightParam = searchParams.get("highlight");
+  const qParam = searchParams.get("q");
+  const trimmedQuery = (qParam ?? "").trim();
+  const isSearchMode = trimmedQuery.length >= 3;
+
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -150,18 +163,31 @@ export default function AllProductsPage() {
   const [modalProduct, setModalProduct] = useState<Product | null>(null);
   const [cartCount, setCartCount] = useState(0);
   const [cartError, setCartError] = useState("");
+  const [highlightedId, setHighlightedId] = useState<string | null>(null);
+
+  // guards against re-running the scroll/highlight effect for the same param
+  const handledHighlightRef = useRef<string | null>(null);
 
   const { data: session } = authClient.useSession();
   const customerId = session?.user?.id;
 
+  // Loads either the full catalog or, when ?q= has 3+ characters, only the
+  // matching products straight from the backend search endpoint — never both.
   useEffect(() => {
+    const url = isSearchMode
+      ? `${API_BASE}/product/search?q=${encodeURIComponent(trimmedQuery)}`
+      : `${API_BASE}/product`;
+
     const fetchProducts = async () => {
+      setLoading(true);
+      setError("");
       try {
-        const res = await fetch(`${API_BASE}/product`);
+        const res = await fetch(url);
         if (!res.ok) throw new Error(`Server error: ${res.status}`);
         const json = await res.json();
         if (!json.success) throw new Error(json.message);
         setProducts(json.data.data ?? []);
+        setActiveTag("All");
       } catch (err: any) {
         setError(err.message || "Failed to load products");
       } finally {
@@ -169,7 +195,8 @@ export default function AllProductsPage() {
       }
     };
     fetchProducts();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isSearchMode, trimmedQuery]);
 
   useEffect(() => {
     const sync = () => {
@@ -180,6 +207,48 @@ export default function AllProductsPage() {
     window.addEventListener("cartUpdated", sync);
     return () => window.removeEventListener("cartUpdated", sync);
   }, []);
+
+  // Locate & highlight a specific product (from "From Our Menu", "Popular
+  // Food", or picking a search suggestion).
+  useEffect(() => {
+    if (!highlightParam || loading || products.length === 0) return;
+    if (handledHighlightRef.current === highlightParam) return;
+
+    const target = products.find((p) => p.productId === highlightParam);
+    if (!target) return;
+
+    handledHighlightRef.current = highlightParam;
+
+    // Switch to the product's own tag so it renders exactly once in the
+    // grid (the "All" view repeats a product under every tag it has).
+    if (target.tags?.length) {
+      setActiveTag(target.tags[0]);
+    }
+
+    // Wait a tick for the (possibly new) tag's grid to paint, then scroll + flash.
+    requestAnimationFrame(() => {
+      setTimeout(() => {
+        const el = document.getElementById(`product-${highlightParam}`);
+        el?.scrollIntoView({ behavior: "smooth", block: "center" });
+        setHighlightedId(highlightParam);
+        setTimeout(() => setHighlightedId(null), 2200);
+
+        // Clean the highlight param so refreshing/back doesn't re-trigger it.
+        const next = new URLSearchParams(searchParams.toString());
+        next.delete("highlight");
+        const qs = next.toString();
+        router.replace(qs ? `/menu?${qs}` : "/menu", { scroll: false });
+      }, 80);
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [highlightParam, loading, products, router]);
+
+  const clearSearch = () => {
+    const next = new URLSearchParams(searchParams.toString());
+    next.delete("q");
+    const qs = next.toString();
+    router.replace(qs ? `/menu?${qs}` : "/menu", { scroll: false });
+  };
 
   const allTags = Array.from(new Set(products.flatMap((p) => p.tags))).sort();
 
@@ -257,7 +326,7 @@ export default function AllProductsPage() {
     return (
       <div className="flex flex-col items-center justify-center gap-3.5 px-4 py-10 text-[#7a6a55]">
         <div className="h-10 w-10 animate-spin rounded-full border-[3px] border-[#e0d5c4] border-t-[#e85d04]" />
-        <p>Loading menu…</p>
+        <p>{isSearchMode ? "Searching…" : "Loading menu…"}</p>
       </div>
     );
   }
@@ -272,6 +341,23 @@ export default function AllProductsPage() {
 
   return (
     <div className="px-4 sm:px-6 lg:px-8">
+      {isSearchMode && (
+        <div className="mb-5 flex items-center justify-between gap-3 rounded-xl border border-[#ede5d8] bg-white px-4 py-3">
+          <span className="text-sm text-[#7a6a55]">
+            Showing results for{" "}
+            <span className="font-bold text-[#1a1208]">
+              &quot;{trimmedQuery}&quot;
+            </span>
+          </span>
+          <button
+            onClick={clearSearch}
+            className="shrink-0 text-sm font-semibold text-[#e85d04]"
+          >
+            Clear search
+          </button>
+        </div>
+      )}
+
       <TagBarPage tags={allTags} active={activeTag} onChange={setActiveTag} />
 
       <main>
@@ -293,6 +379,7 @@ export default function AllProductsPage() {
                   key={product.productId}
                   product={product}
                   onAdd={handleAdd}
+                  isHighlighted={product.productId === highlightedId}
                 />
               ))}
             </div>
@@ -300,8 +387,15 @@ export default function AllProductsPage() {
         ))}
 
         {Object.keys(productsByTag).length === 0 && (
-          <div className="flex min-h-[40vh] items-center justify-center text-[#7a6a55]">
-            No products found for "{activeTag}"
+          <div className="flex min-h-[40vh] flex-col items-center justify-center gap-2 text-center text-[#7a6a55]">
+            {isSearchMode ? (
+              <>
+                <span className="text-4xl">🔍</span>
+                <p>No products found for &quot;{trimmedQuery}&quot;.</p>
+              </>
+            ) : (
+              <p>No products found for "{activeTag}"</p>
+            )}
           </div>
         )}
       </main>
@@ -328,5 +422,22 @@ export default function AllProductsPage() {
         </div>
       )}
     </div>
+  );
+}
+
+// ─── Default export: wraps in Suspense since useSearchParams() requires it ──
+
+export default function AllProductsPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex flex-col items-center justify-center gap-3.5 px-4 py-10 text-[#7a6a55]">
+          <div className="h-10 w-10 animate-spin rounded-full border-[3px] border-[#e0d5c4] border-t-[#e85d04]" />
+          <p>Loading menu…</p>
+        </div>
+      }
+    >
+      <AllProductsPageInner />
+    </Suspense>
   );
 }

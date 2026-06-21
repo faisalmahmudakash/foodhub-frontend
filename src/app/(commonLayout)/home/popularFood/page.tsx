@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 const API_BASE_URL = `${process.env.NEXT_PUBLIC_API_URL}/product`;
 
@@ -33,11 +34,24 @@ function getDisplayPrice(prices: ProductPrice[]): number | null {
 }
 
 function ProductCard({ product }: { product: Product }) {
+  const router = useRouter();
   const price = getDisplayPrice(product.productPrices);
   const imgSrc = product.images || null;
 
+  const goToProductOnMenu = () => {
+    router.push(`/menu?highlight=${product.productId}`);
+  };
+
   return (
-    <div className="food-card">
+    <div
+      className="food-card"
+      onClick={goToProductOnMenu}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") goToProductOnMenu();
+      }}
+    >
       <div className="food-image-wrapper">
         <div className="dashed-ring" />
         {imgSrc ? (
@@ -149,6 +163,7 @@ export default function PopularFoodPage() {
           box-shadow: 0 2px 12px rgba(0,0,0,0.06);
           transition: transform 0.2s ease, box-shadow 0.2s ease;
           position: relative;
+          cursor: pointer;
         }
 
         .food-card:hover {

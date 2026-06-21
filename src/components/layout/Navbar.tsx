@@ -26,10 +26,9 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
 import { loadCart } from "@/helpers/cartHelpers";
-// TODO: update this import path to wherever your "Your Cart" component actually lives
-// import CartItemPage from "@/app/cart/page";
 import { useState, useRef, useEffect } from "react";
 import CartItemPage from "@/app/(commonLayout)/menu/cartItem/page";
+import { ProductSearchResult, searchProducts } from "@/helpers/ProductApi";
 
 interface MenuItem {
   title: string;
@@ -59,6 +58,158 @@ interface NavbarProps {
       url: string;
     };
   };
+}
+
+function SearchBox({
+  className,
+  onNavigate,
+}: {
+  className?: string;
+  onNavigate?: () => void;
+}) {
+  const router = useRouter();
+  const boxRef = useRef<HTMLDivElement>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const hasNavigatedRef = useRef(false);
+
+  const [term, setTerm] = useState("");
+  const [suggestions, setSuggestions] = useState<ProductSearchResult[]>([]);
+  const [open, setOpen] = useState(false);
+  const [searching, setSearching] = useState(false);
+
+  // close the dropdown on outside click
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (boxRef.current && !boxRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, []);
+
+  const runSearch = (value: string) => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+
+    const trimmed = value.trim();
+    if (trimmed.length < 3) {
+      setSuggestions([]);
+      setOpen(false);
+      hasNavigatedRef.current = false;
+      return;
+    }
+
+    debounceRef.current = setTimeout(async () => {
+      setSearching(true);
+      try {
+        const results = await searchProducts(trimmed);
+        setSuggestions(results);
+        setOpen(true);
+      } catch {
+        setSuggestions([]);
+        setOpen(true);
+      } finally {
+        setSearching(false);
+      }
+
+      // First time crossing the 3-character mark, jump to /menu.
+      // After that, keep ?q= in sync without piling up browser history.
+      if (!hasNavigatedRef.current) {
+        hasNavigatedRef.current = true;
+        router.push(`/menu?q=${encodeURIComponent(trimmed)}`);
+      } else {
+        router.replace(`/menu?q=${encodeURIComponent(trimmed)}`, {
+          scroll: false,
+        });
+      }
+    }, 300);
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setTerm(value);
+    runSearch(value);
+  };
+
+  const handleSelect = (productId: string) => {
+    setOpen(false);
+    setTerm("");
+    setSuggestions([]);
+    hasNavigatedRef.current = false;
+    onNavigate?.();
+    router.push(`/menu?highlight=${productId}`);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter" && suggestions.length > 0) {
+      e.preventDefault();
+      handleSelect(suggestions[0].productId);
+    }
+  };
+
+  return (
+    <div className={cn("relative", className)} ref={boxRef}>
+      <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+      <Input
+        value={term}
+        onChange={handleChange}
+        onKeyDown={handleKeyDown}
+        onFocus={() => suggestions.length > 0 && setOpen(true)}
+        placeholder="Search..."
+        className="w-full pl-9"
+      />
+
+      {open && (
+        <div className="absolute left-0 right-0 top-full z-50 mt-1 max-h-80 overflow-y-auto rounded-md border bg-background shadow-md">
+          {searching && (
+            <div className="px-3 py-2.5 text-sm text-muted-foreground">
+              Searching…
+            </div>
+          )}
+          {!searching && suggestions.length === 0 && (
+            <div className="px-3 py-2.5 text-sm text-muted-foreground">
+              No matches found.
+            </div>
+          )}
+          {!searching &&
+            suggestions.map((p) => (
+              <button
+                key={p.productId}
+                type="button"
+                onClick={() => handleSelect(p.productId)}
+                className="flex w-full items-center gap-3 px-3 py-2 text-left text-sm hover:bg-muted"
+              >
+                <div className="h-8 w-8 shrink-0 overflow-hidden rounded-full bg-muted">
+                  {p.images ? (
+                    <img
+                      src={p.images}
+                      alt={p.productName}
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center text-xs">
+                      🍽️
+                    </div>
+                  )}
+                </div>
+                <span className="truncate">{p.productName}</span>
+                {p.availabilityStatus === "NOT_AVAILABLE" && (
+                  <span className="ml-auto shrink-0 text-xs text-muted-foreground">
+                    Unavailable
+                  </span>
+                )}
+              </button>
+            ))}
+        </div>
+      )}
+    </div>
+  );
 }
 
 const Navbar = ({
@@ -165,10 +316,7 @@ const Navbar = ({
           </div>
           <div className="flex items-center gap-3">
             {/* Search */}
-            <div className="relative hidden xl:block">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input placeholder="Search..." className="w-64 pl-9" />
-            </div>
+            <SearchBox className="hidden w-64 xl:block" />
 
             {/* Cart — on larger screens, the cart lives inline on /menu */}
             <Button
@@ -284,9 +432,8 @@ const Navbar = ({
                   </SheetHeader>
 
                   {/* search bar for mobile */}
-                  <div className="relative px-2">
-                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input placeholder="Search..." className="pl-9" />
+                  <div className="px-2">
+                    <SearchBox onNavigate={() => setMenuSheetOpen(false)} />
                   </div>
 
                   <div className="px-2">
