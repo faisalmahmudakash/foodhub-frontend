@@ -40,6 +40,7 @@ export type OrderCustomer = {
   name: string;
   email: string;
   phone?: string | null;
+  defaultAddress?: string | null;
 };
 
 export type Order = {

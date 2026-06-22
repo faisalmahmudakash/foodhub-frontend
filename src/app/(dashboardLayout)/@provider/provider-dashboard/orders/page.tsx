@@ -1,19 +1,10 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-// import { Order, OrderStatus } from "@/types/order.type";
-import { fetchAllOrders, updateOrderStatusOnServer } from "@/helpers/orderApi";
+import { fetchMyOrders } from "@/helpers/providerApi";
 import { fmt } from "@/helpers/cartHelpers";
-import { Order, OrderStatus } from "@/types/order.type";
-
-const STATUS_OPTIONS: OrderStatus[] = [
-  "PENDING",
-  "CONFIRMED",
-  "PREPARING",
-  "READY",
-  "DELIVERED",
-  "CANCELLED",
-];
+import type { ProviderOrder } from "@/types/provider.type";
+import type { OrderStatus } from "@/types/order.type";
 
 const STATUS_STYLES: Record<OrderStatus, string> = {
   PENDING: "bg-[#fef3c7] text-[#92400e]",
@@ -24,6 +15,15 @@ const STATUS_STYLES: Record<OrderStatus, string> = {
   CANCELLED: "bg-[#fee2e2] text-[#b91c1c]",
 };
 
+const STATUS_OPTIONS: OrderStatus[] = [
+  "PENDING",
+  "CONFIRMED",
+  "PREPARING",
+  "READY",
+  "DELIVERED",
+  "CANCELLED",
+];
+
 const formatDate = (iso: string) =>
   new Date(iso).toLocaleString("en-US", {
     month: "short",
@@ -32,19 +32,17 @@ const formatDate = (iso: string) =>
     minute: "2-digit",
   });
 
-export default function AdminOrderTablePage() {
-  const [orders, setOrders] = useState<Order[]>([]);
+export default function ProviderOrdersPage() {
+  const [orders, setOrders] = useState<ProviderOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [activeFilter, setActiveFilter] = useState<"ALL" | OrderStatus>("ALL");
-  const [updatingId, setUpdatingId] = useState<string | null>(null);
-  const [rowError, setRowError] = useState<Record<string, string>>({});
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     const load = async () => {
       try {
-        const data = await fetchAllOrders();
+        const data = await fetchMyOrders();
         setOrders(data);
       } catch (err: any) {
         setError(err.message || "Failed to load orders");
@@ -62,30 +60,6 @@ export default function AdminOrderTablePage() {
       else next.add(orderId);
       return next;
     });
-  };
-
-  const handleStatusChange = async (orderId: string, status: OrderStatus) => {
-    const prevOrders = orders;
-    setUpdatingId(orderId);
-    setRowError((prev) => ({ ...prev, [orderId]: "" }));
-
-    // Optimistic update
-    setOrders((curr) =>
-      curr.map((o) => (o.orderId === orderId ? { ...o, status } : o)),
-    );
-
-    try {
-      await updateOrderStatusOnServer(orderId, status);
-    } catch (err: any) {
-      // Revert on failure
-      setOrders(prevOrders);
-      setRowError((prev) => ({
-        ...prev,
-        [orderId]: err.message || "Failed to update status",
-      }));
-    } finally {
-      setUpdatingId(null);
-    }
   };
 
   const filteredOrders =
@@ -125,9 +99,10 @@ export default function AdminOrderTablePage() {
 
   return (
     <div className="px-4 py-6 sm:px-6 lg:px-8">
-      <h1 className="mb-5 text-xl font-extrabold text-[#1a1208]">Orders</h1>
+      <h1 className="mb-5 text-xl font-extrabold text-[#1a1208]">
+        Orders for My Products
+      </h1>
 
-      {/* Status Filter Tabs */}
       <div className="mb-5 flex flex-wrap gap-2">
         {(["ALL", ...STATUS_OPTIONS] as const).map((s) => (
           <button
@@ -144,15 +119,14 @@ export default function AdminOrderTablePage() {
         ))}
       </div>
 
-      {/* Orders Table */}
       <div className="overflow-x-auto rounded-2xl border border-[#ede5d8] bg-white shadow-[0_2px_8px_rgba(0,0,0,0.05)]">
-        <table className="w-full min-w-[820px] text-left text-sm">
+        <table className="w-full min-w-[760px] text-left text-sm">
           <thead>
             <tr className="border-b border-[#ede5d8] bg-[#faf7f3] text-xs font-bold uppercase tracking-wide text-[#a08060]">
               <th className="px-4 py-3">Order</th>
               <th className="px-4 py-3">Customer</th>
-              <th className="px-4 py-3">Items</th>
-              <th className="px-4 py-3">Total</th>
+              <th className="px-4 py-3">My Items</th>
+              <th className="px-4 py-3">My Subtotal</th>
               <th className="px-4 py-3">Status</th>
               <th className="px-4 py-3">Placed</th>
             </tr>
@@ -160,7 +134,6 @@ export default function AdminOrderTablePage() {
           <tbody>
             {filteredOrders.map((order) => {
               const isExpanded = expanded.has(order.orderId);
-              const isUpdating = updatingId === order.orderId;
               return (
                 <React.Fragment key={order.orderId}>
                   <tr className="border-b border-[#f0e8dc] align-top hover:bg-[#fdfbf8]">
@@ -174,11 +147,6 @@ export default function AdminOrderTablePage() {
                       <div className="text-xs text-[#a08060]">
                         {order.customer?.email}
                       </div>
-                      {order.customer?.defaultAddress && (
-                        <div className="mt-0.5 max-w-[180px] text-xs text-[#a08060]">
-                          📍 {order.customer.defaultAddress}
-                        </div>
-                      )}
                     </td>
                     <td className="px-4 py-3">
                       <button
@@ -191,35 +159,16 @@ export default function AdminOrderTablePage() {
                       </button>
                     </td>
                     <td className="px-4 py-3 font-bold text-[#1a1208]">
-                      {fmt(order.totalAmount ?? 0)}
+                      {fmt(order.providerSubtotal ?? 0)}
                     </td>
                     <td className="px-4 py-3">
-                      <div className="flex flex-col gap-1">
-                        <select
-                          value={order.status}
-                          disabled={isUpdating}
-                          onChange={(e) =>
-                            handleStatusChange(
-                              order.orderId,
-                              e.target.value as OrderStatus,
-                            )
-                          }
-                          className={`w-fit rounded-full border-0 px-3 py-1 text-xs font-bold outline-none ring-1 ring-inset ring-black/5 ${
-                            STATUS_STYLES[order.status]
-                          } ${isUpdating ? "opacity-60" : "cursor-pointer"}`}
-                        >
-                          {STATUS_OPTIONS.map((s) => (
-                            <option key={s} value={s}>
-                              {s}
-                            </option>
-                          ))}
-                        </select>
-                        {rowError[order.orderId] && (
-                          <span className="text-[0.68rem] font-semibold text-[#e85d04]">
-                            {rowError[order.orderId]}
-                          </span>
-                        )}
-                      </div>
+                      <span
+                        className={`rounded-full px-3 py-1 text-xs font-bold ${
+                          STATUS_STYLES[order.status]
+                        }`}
+                      >
+                        {order.status}
+                      </span>
                     </td>
                     <td className="whitespace-nowrap px-4 py-3 text-xs text-[#8a7460]">
                       {formatDate(order.createdAt)}
@@ -250,19 +199,9 @@ export default function AdminOrderTablePage() {
                                     </div>
                                   )}
                                 </div>
-                                <div>
-                                  <div className="text-sm font-semibold text-[#1a1208]">
-                                    {item.product?.productName ??
-                                      "Unknown product"}
-                                  </div>
-                                  {item.orderItemAddons.length > 0 && (
-                                    <div className="text-xs text-[#a08060]">
-                                      +{" "}
-                                      {item.orderItemAddons
-                                        .map((a) => a.addonName)
-                                        .join(", ")}
-                                    </div>
-                                  )}
+                                <div className="text-sm font-semibold text-[#1a1208]">
+                                  {item.product?.productName ??
+                                    "Unknown product"}
                                 </div>
                               </div>
                               <div className="text-right text-sm">

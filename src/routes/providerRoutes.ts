@@ -2,16 +2,30 @@ import { Route } from "@/types";
 
 export const providerRoutes: Route[] = [
   {
-    title: "Getting Started",
+    title: "Provider Dashboard",
     url: "#",
     items: [
       {
-        title: "Product",
-        url: "/dashboard/product",
+        title: "Dashboard",
+        url: "/provider-dashboard",
+      },
+    ],
+  },
+  {
+    title: "Provider Dashboard",
+    url: "#",
+    items: [
+      {
+        title: "Orders",
+        url: "/provider-dashboard/orders",
       },
       {
-        title: "Project Structure",
-        url: "#",
+        title: "Products",
+        url: "/provider-dashboard/products",
+      },
+      {
+        title: "Reviews",
+        url: "/provider-dashboard/reviews",
       },
     ],
   },

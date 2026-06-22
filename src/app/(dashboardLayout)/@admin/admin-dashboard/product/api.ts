@@ -1,11 +1,3 @@
-// import type {
-//   Addon,
-//   AvailabilityStatus,
-//   MileTime,
-//   PriceType,
-//   Product,
-// } from "./types";
-
 import { AvailabilityStatus, MileTime, PriceType } from "@/types/product.type";
 import { Addon, Product } from "@/types/productPrice.type";
 
@@ -162,15 +154,6 @@ function deleteAddon(productId: string, addonId: string) {
     body: JSON.stringify({ productId }),
   });
 }
-
-// ---------------- Orchestration ----------------
-//
-// The backend exposes product, price and addon as separate resources, so
-// saving the "all-in-one" form means one product call plus one call per
-// price/addon row. Deletions are sent before creates/updates so switching
-// price type (BASE -> SIZE or back) doesn't collide with the backend's
-// one-price-type-per-product rule.
-
 export interface SaveProductInput {
   productId?: string; // present in edit mode
   product: ProductFormFields;
